@@ -1,8 +1,14 @@
 #include "Arduino.h"
+
+// Graphics Libraries 
 #include "Adafruit_GFX.h"
 #include "Adafruit_NeoPixel.h"
 #include "Adafruit_NeoMatrix.h"
 #include "Picopixel.h"
+
+// Networking Libraries
+#include "ESP8266WiFiMulti.h"
+#include "ESP8266mDNS.h"
 
 // Pin Definitions
 #define PIN_DISPLAY1 2
@@ -28,3 +34,19 @@
 #define YELLOW   0xFFE0 
 #define WHITE    0xFFFF
 
+typedef void (*void_function_pointer)();
+
+// Holds do_handle values
+bool do_scroll_en = false;
+bool do_time_en = false;
+uint32_t do_at_millis;
+static void_function_pointer do_handler;
+
+// Wifi Conneting status
+bool connecting = false;
+
+// Current text on screen
+int16_t text_xpos = 0;
+bool text_scroll = false;
+uint16_t text_color = 0;
+String text_string = "";

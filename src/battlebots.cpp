@@ -4,12 +4,31 @@
 Adafruit_NeoMatrix display_1 = Adafruit_NeoMatrix(16, 16, 2, 1, PIN_DISPLAY1, NEO_MATRIX_TOP + NEO_MATRIX_RIGHT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_GRB + NEO_KHZ800);
 Adafruit_NeoMatrix display_2 = Adafruit_NeoMatrix(8, 8, 2, 1, PIN_DISPLAY2, NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG + NEO_TILE_RIGHT + NEO_GRB + NEO_KHZ800);
 
-int16_t text_xpos = 0;
-bool text_scroll = false;
-uint16_t text_color = 0;
-String text_string = "";
+// Networking objects
+ESP8266WiFiMulti wifimulti;
 
-void handle_text(){
+
+void do_time(uint32_t do_in_millis, void_function_pointer callback){
+    do_time_en = true;
+    do_scroll_en = false;
+    do_at_millis = millis() + do_in_millis;
+    do_handler = callback;
+}
+
+void do_scroll(void_function_pointer callback){
+    do_scroll_en = true;
+    do_time_en = false;
+    do_handler = callback;
+}
+
+void do_handle(){
+    if(do_time_en && millis() >= do_at_millis){
+        do_time_en = false;
+        do_handler();
+    }
+}
+
+void text_handle(){
     if(text_scroll){
         text_xpos--;
     }
@@ -17,6 +36,11 @@ void handle_text(){
     int16_t text_length = text_string.length() * 8;
     if(text_xpos < -text_length){
         text_xpos = 32;
+
+        if(do_scroll_en){
+            do_scroll_en = false;
+            do_handler();
+        }
     }
 
     display_1.setCursor(text_xpos, 12);
@@ -37,12 +61,39 @@ void handle_text(){
 }
 
 void text(String text, uint16_t color, bool scroll){
-    text_xpos = scroll? 32 : (16 - (text.length() * 3));
+    text_xpos = scroll? 32 : (15 - (text.length() * 3));
     text_color = color;
     text_string = text;
     text_scroll = scroll;
 }
 
+void ready(){
+    text("1:30", RED, false);
+}
+
+void msg_hotspot(){
+    connecting = false;
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("battlebots_timer","12345678");
+    text("HOTSPOT MODE", CYAN, true);
+    do_scroll(ready);
+    MDNS.begin("battlebots");
+}
+
+void msg_connecting(){
+    text("WIFI CONNECTING...", YELLOW, true);
+    do_time(10000, msg_hotspot);
+    connecting = true;
+}
+
+void msg_intro(){
+    text("LEGO BATTLEBOTS", WHITE, true);
+    do_scroll(msg_connecting);
+}
+
+// #############################################################################
+//   SETUP
+// #############################################################################
 void setup(){
     // Serial Monitor
     Serial.begin(115200);
@@ -69,15 +120,33 @@ void setup(){
     display_1.setBrightness(64);
     display_2.setBrightness(64);
 
-    text("GO!", YELLOW, false);
+    WiFi.mode(WIFI_STA);
+    wifimulti.addAP("Azaviu", "sebastian");
 
+    msg_intro();
+    
 }   
 
+// #############################################################################
+//   LOOP
+// #############################################################################
 void loop(){
     display_1.clear();
     display_2.clear();
 
-    handle_text();
+    if(connecting){
+        if(wifimulti.run() == WL_CONNECTED){
+            connecting = false;
+            text("WIFI CONNECTED: " + WiFi.SSID(), BLUE, true);
+            do_scroll(ready);
+            MDNS.begin("battlebots");
+        }
+    }else{
+        MDNS.update();
+    }
+
+    text_handle();
+    do_handle();
 
     display_1.show();
     display_2.show();
