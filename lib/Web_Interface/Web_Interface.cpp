@@ -49,11 +49,6 @@
 #include "Web_Interface.h"
 
 ESP8266WebServer server(80); //Create a web server listening on port 80
-WebSocketsServer websockets_server = WebSocketsServer(81); //Create a websockets server listening on port 81
-
-static void_function_pointer _offline; //Callback function when connected
-
-int8_t websockets_client = -1; //Current websockets client number connected to (-1 is none)
 
 const String settings_path = "/settings.txt"; //Path to settings file
 
@@ -61,10 +56,7 @@ File upload_file; //Holds file currently uploading
 
 //settings
 const bool settings_page = true;
-const bool console_page = true;
-const uint8_t number_custom_pages = 1;
-const String custom_page_path[number_custom_pages] = "/contacts/";
-const String custom_page_name[number_custom_pages] = "Contacts";
+const uint8_t number_custom_pages = 0;
 
 /*  (private) get_content_type: Returns the HTTP content type based on the extension
         filename: 
@@ -135,45 +127,6 @@ bool handle_file_read(String path){
     return false;                                         
 }
 
-/*  (private)websockets_event: Called when a new websockets event happens
-        num: client number
-        type: event type
-        payload: message payload
-        length: message length
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void websockets_event(uint8_t num, WStype_t type, uint8_t * payload, size_t length) { // When a WebSocket message is received
-
-    //Take different action based on the type of event
-    switch (type) {
-        //When the websockets client disconnects...
-        case WStype_DISCONNECTED:  
-            //Erase the client number           
-            websockets_client = -1;
-            break;
-
-        //When the websockets client connects...
-        case WStype_CONNECTED:
-            //Store the client number
-            websockets_client = num;
-
-            //If the console file exists...
-            if(SPIFFS.exists("/www/console.txt")){
-                //Open the console.txt file in read mode and send it to the client
-                File console = SPIFFS.open("/www/console.txt", "r");
-                String console_text = console.readString();
-                websockets_server.sendTXT(num, console_text);
-                //Close the file
-                console.close();
-            }
-
-            break;
-
-        //For all other cases, do nothing
-        default:           
-            break;
-    }
-
-}
 
 /*  (private)text_input_HTML: Create the html for a text form input
         id: setting id
@@ -418,8 +371,6 @@ void handle_settings_post(){
     //Close the file
     file.close();
 
-    //Take the tag machine offline and restart
-    _offline();
     ESP.restart();
 }
 
@@ -427,28 +378,17 @@ void handle_settings_post(){
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void handle_nav(){
     String response;
-    response = "<nav class=\"navbar navbar-expand-md navbar-dark bg-dark mb-4\">";
-    response +=     "<a class=\"navbar-brand\" href=\"/index.html\">TAG Machine</a>";
+    response = "<nav class=\"navbar navbar-expand-md navbar-dark bg-primary mb-4\">";
+    response +=     "<a class=\"navbar-brand\" href=\"/index.html\">LEGO Battlebots Timer</a>";
     response +=     "<button class=\"navbar-toggler\" type=\"button\" data-toggle=\"collapse\" data-target=\"#navbarCollapse\" aria-controls=\"navbarCollapse\" aria-expanded=\"false\" aria-label=\"Toggle navigation\">";
     response +=         "<span class=\"navbar-toggler-icon\"></span>";
     response +=     "</button>";
     response +=     "<div class=\"collapse navbar-collapse\" id=\"navbarCollapse\">";
     response +=         "<ul class=\"navbar-nav\">";
 
-    for(int i = 0; i < number_custom_pages; i++){
-        response +=         "<li class=\"nav-item\">";
-        response +=             "<a class=\"nav-link\" href=\"" + custom_page_path[i] + "\">" + custom_page_name[i] + "</a>";
-        response +=         "</li>";
-    }
-
     if(settings_page){
         response +=         "<li class=\"nav-item\">";
         response +=             "<a class=\"nav-link\" href=\"/settings/\">Settings</a>";
-        response +=         "</li>";
-    }
-    if(console_page){
-        response +=         "<li class=\"nav-item\">";
-        response +=             "<a class=\"nav-link\" href=\"/console/\">Console</a>";
         response +=         "</li>";
     }
 
@@ -465,80 +405,6 @@ void handle_nav(){
 Web_Interface::Web_Interface(){
     SPIFFS.begin();
     SPIFFS.gc();
-}
-
-/*  set_callback: Set the callback function to take tag machine offline safely before restarting
-        offline: offline function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void Web_Interface::set_callback(void_function_pointer offline){
-    _offline = offline;
-}
-
-/*  (private)check_settings_file: Check the settings file to ensure all the required parameters are present
-    RETURNS true if there is no blank parameter that's required, false if there is a blank parameter that's required
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-bool check_settings_file(){
-
-    // If the settings file does not exist, copy it from the default settings file
-    if(!SPIFFS.exists(settings_path)){
-        File settings_def = SPIFFS.open("/settings_def.txt", "r");
-        File settings = SPIFFS.open(settings_path, "w");
-        while(settings_def.available()){
-            settings.write(settings_def.read());
-        }
-        settings_def.close();
-        settings.close();
-    }
-
-    //Open the file
-    File file = SPIFFS.open(settings_path, "r");
-    //Set aside enough memory for a JSON document
-    DynamicJsonDocument doc(file.size() * 2);
-
-    //Parse JSON from file
-    DeserializationError error = deserializeJson(doc, file);
-
-    //Close the file
-    file.close();
-
-    //If there is an error, return false
-    if(error){
-        return false;
-    } 
-    
-    //Store whether the settings category exists or not
-    bool advanced = doc.containsKey("advanced");
-
-    //This array holds the settings for the current category
-    JsonArray settings;
-    //Cycle through each setting category
-    for(int i = 0; i < doc.size(); i++){
-        //Load the correct category based on the current loop
-        if(i == 0){
-            settings = doc["general"];
-        }else if(advanced && i == 1){
-            settings = doc["advanced"];
-        }else{
-            settings = doc["wifi"];
-        }
-
-        //For each setting...
-        for(int i = 0; i < settings.size(); i++){
-            //If this setting is required...
-            if(settings[i]["req"] == true){
-                //If this setting has a value...
-                if(settings[i].containsKey("val")){
-                    //If this setting has a blank value, return false
-                    if(settings[i]["val"] == "") return false;
-                //If this setting doesn't have a value, return false
-                }else{
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
 }
 
 /*  (private)handle_file_upload: Processes file upload and saves it to SPIFFS
@@ -564,19 +430,17 @@ void handle_file_upload(){
         if(upload_file) upload_file.close();
         //If the settings file was uploaded, restart the ESP
         if(upload.filename == "settings.txt"){
-            _offline();
             ESP.restart();
         } 
     }
 
     String upload_status = String(upload.status);
-    websockets_server.sendTXT(websockets_client, upload_status);
 }
 
 /*  begin: Start the web interface
     RETURNS True if the settings file is good, false if it's missing anything
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-bool Web_Interface::begin(){
+void Web_Interface::begin(){
 
     //When the settings file is requested or posted, call the corresponding function
     server.on("/settings_data", HTTP_POST, handle_settings_post);
@@ -584,6 +448,8 @@ bool Web_Interface::begin(){
     server.on("/nav", HTTP_GET, handle_nav);
     //When a POST is requested from /upload, send status 200 to initiate upload and call handle_file_upload function repeatedly
     server.on("/upload", HTTP_POST, [](){ server.send(200); }, handle_file_upload );
+
+    server.on("/restart", HTTP_GET, [](){ server.send(200); ESP.restart(); });
 
 
     //If any other file is requested, send it if it exists or send a generic 404 if it doesn't exist
@@ -595,53 +461,23 @@ bool Web_Interface::begin(){
 
     server.begin(); //Start the server
 
-    if(console_page){
-        //If a websockets message comes in, call this function
-        websockets_server.onEvent(websockets_event);
-        websockets_server.begin(); //Start the websockets server
-        //If a console.txt file exists, delete it to start with a clean console upon init
-        if(SPIFFS.exists("/www/console.txt")) SPIFFS.remove("/www/console.txt"); 
-    } 
-
-    //If the settings file is good, return true. Otherwise, return false. 
-    if(check_settings_file() || !settings_page){
-        return true;
+    // If the settings file does not exist, copy it from the default settings file
+    if(!SPIFFS.exists(settings_path)){
+        File settings_def = SPIFFS.open("/settings_def.txt", "r");
+        File settings = SPIFFS.open(settings_path, "w");
+        while(settings_def.available()){
+            settings.write(settings_def.read());
+        }
+        settings_def.close();
+        settings.close();
     }
-    return false;
+
 }
 
 /*  handle: Check for incoming requests to the server and to the websockets server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void Web_Interface::handle(){
     server.handleClient();
-    if(console_page) websockets_server.loop();
-}
-
-/*  console_print: Print to the web console
-        output: Text to print
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void Web_Interface::console_print(String output){
-    if(console_page){
-        //If there is an active websockets connection, send the text to the client
-        if(websockets_client != -1){
-            websockets_server.sendTXT(websockets_client, output);
-        }
-
-        //Open/create the console.txt file in append mode
-        File console = SPIFFS.open("/www/console.txt", "a");
-
-        //If the console file is over 10kb, delete it and create a new one. 
-        if(console.size() > 10000){
-            console.close();
-            SPIFFS.remove("/www/console.txt");
-            console = SPIFFS.open("/www/console.txt", "w");
-        }
-
-        //output the current string to the end of the file
-        console.print(output); 
-        //Close the file
-        console.close();
-    }
 }
 
 /*  load_setting: 

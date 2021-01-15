@@ -6,27 +6,10 @@ Adafruit_NeoMatrix display_2 = Adafruit_NeoMatrix(8, 8, 2, 1, PIN_DISPLAY2, NEO_
 
 // Networking objects
 ESP8266WiFiMulti wifimulti;
+Web_Interface webinterface;
 
-
-void do_time(uint32_t do_in_millis, void_function_pointer callback){
-    do_time_en = true;
-    do_scroll_en = false;
-    do_at_millis = millis() + do_in_millis;
-    do_handler = callback;
-}
-
-void do_scroll(void_function_pointer callback){
-    do_scroll_en = true;
-    do_time_en = false;
-    do_handler = callback;
-}
-
-void do_handle(){
-    if(do_time_en && millis() >= do_at_millis){
-        do_time_en = false;
-        do_handler();
-    }
-}
+Soft_ISR soft_isr;
+Persistent_Storage prefs("pref");
 
 void text_handle(){
     if(text_scroll){
@@ -36,11 +19,7 @@ void text_handle(){
     int16_t text_length = text_string.length() * 8;
     if(text_xpos < -text_length){
         text_xpos = 32;
-
-        if(do_scroll_en){
-            do_scroll_en = false;
-            do_handler();
-        }
+        soft_isr.trigger();
     }
 
     display_1.setCursor(text_xpos, 12);
@@ -67,28 +46,57 @@ void text(String text, uint16_t color, bool scroll){
     text_scroll = scroll;
 }
 
+uint16_t parse_color(String input){
+    if(input == "Blue") return BLUE;
+    if(input == "Red") return RED;
+    if(input == "Green") return GREEN;
+    if(input == "Cyan") return CYAN;
+    if(input == "Magenta") return MAGENTA;
+    if(input == "Yellow") return YELLOW;
+    return WHITE;
+}
+
 void ready(){
-    text("1:30", RED, false);
+    text("1:30", parse_color(webinterface.load_setting("color_timer")), false);
 }
 
-void msg_hotspot(){
-    connecting = false;
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP("battlebots_timer","12345678");
-    text("HOTSPOT MODE", CYAN, true);
-    do_scroll(ready);
-    MDNS.begin("battlebots");
-}
+void num_players(){
+    state = 1;
 
-void msg_connecting(){
-    text("WIFI CONNECTING...", YELLOW, true);
-    do_time(10000, msg_hotspot);
-    connecting = true;
+    if(three_players) text("3 PLAYERS", GREEN, true);
+    else text("2 PLAYERS", BLUE, true);
+    soft_isr.set_trigger(ready);
+    
 }
 
 void msg_intro(){
-    text("LEGO BATTLEBOTS", WHITE, true);
-    do_scroll(msg_connecting);
+    text(webinterface.load_setting("msg_intro"), parse_color(webinterface.load_setting("color_intro")), true);
+    soft_isr.set_trigger(num_players);
+}
+
+void wifi_loop(){
+    display_1.clear();
+    display_2.clear();
+    display_1.setBrightness(2);
+    display_2.setBrightness(1);
+    display_1.fillScreen(CYAN);
+    display_2.fillScreen(CYAN);
+    display_1.show();
+    display_2.show();
+
+    //Load local_URL and filter out prefix and suffix
+    String local_URL = webinterface.load_setting("local_URL");
+    if(local_URL.endsWith(".local")) local_URL = local_URL.substring(0,local_URL.length()-6);
+    if(local_URL.startsWith("http://")) local_URL = local_URL.substring(7);
+    if(local_URL.startsWith("https://")) local_URL = local_URL.substring(8);
+    if(local_URL == "") local_URL = "battlebots";
+    MDNS.begin(local_URL);
+
+    while(true){
+        MDNS.update();
+        webinterface.handle();
+        yield();
+    }
 }
 
 // #############################################################################
@@ -97,6 +105,7 @@ void msg_intro(){
 void setup(){
     // Serial Monitor
     Serial.begin(115200);
+    Serial.println("");
     
     // Initialize GPIO
     pinMode(PIN_BTN_BLACK, INPUT_PULLUP);
@@ -112,18 +121,44 @@ void setup(){
     digitalWrite(PIN_LED_RED, LOW);
     digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(PIN_BUZZER, LOW);
-
+  
     // Initialize Matrix displays
     display_1.begin();
     display_2.begin();
 
-    display_1.setBrightness(64);
-    display_2.setBrightness(64);
+    display_1.setBrightness(32);
+    display_2.setBrightness(32);
 
-    WiFi.mode(WIFI_STA);
-    wifimulti.addAP("Azaviu", "sebastian");
+    webinterface.begin();
 
-    msg_intro();
+    three_players = (prefs.get("num_players") == "3");
+
+    if(!digitalRead(PIN_BTN_BLACK)){
+        WiFi.mode(WIFI_AP);
+
+        String SSID = webinterface.load_setting("hotspot_SSID");
+        if(SSID == ""){
+            WiFi.softAP("battlebots","12345678");
+        }else{
+            String password = webinterface.load_setting("hotspot_password");
+            if(password.length() < 8){
+                WiFi.softAP(SSID);
+            }else{
+                WiFi.softAP(SSID, password);
+            }
+        }
+
+        text("HOTSPOT MODE", CYAN, true);
+        soft_isr.set_trigger(wifi_loop);
+
+    }else{
+        WiFi.mode(WIFI_OFF);
+        if(webinterface.load_setting("msg_intro") == ""){
+            num_players();
+        }else{
+            msg_intro();
+        }
+    } 
     
 }   
 
@@ -131,22 +166,24 @@ void setup(){
 //   LOOP
 // #############################################################################
 void loop(){
+
+    btn_black_down = !digitalRead(PIN_BTN_BLACK);
+    btn_red_down = !digitalRead(PIN_BTN_RED);
+    btn_blue_down = !digitalRead(PIN_BTN_BLUE);
+    btn_green_down = !digitalRead(PIN_BTN_GREEN);
+
+    soft_isr.handle();
+
+    switch(state){
+        case 0:
+            if(btn_black_down || btn_red_down || btn_blue_down || btn_green_down) num_players();
+    }
+
+    // UpdateMatrix Displays
     display_1.clear();
     display_2.clear();
 
-    if(connecting){
-        if(wifimulti.run() == WL_CONNECTED){
-            connecting = false;
-            text("WIFI CONNECTED: " + WiFi.SSID(), BLUE, true);
-            do_scroll(ready);
-            MDNS.begin("battlebots");
-        }
-    }else{
-        MDNS.update();
-    }
-
     text_handle();
-    do_handle();
 
     display_1.show();
     display_2.show();

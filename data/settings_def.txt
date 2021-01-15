@@ -1,0 +1,46 @@
+{"general":[
+    {"id":"msg_intro",
+    "type":"text",
+    "name":"Startup Message",
+    "desc":"Leave this blank to skip startup message",
+    "req":false,
+    "val":"LEGO BATTLEBOTS"}
+    ],
+
+"advanced":[
+    {"id":"color_intro",
+    "type":"multi",
+    "name":"Startup Message Color",
+    "req":true,
+    "val":"White", 
+    "opt":["Blue","Red", "Green","Cyan", "Magenta","Yellow","White"]},
+
+    {"id":"color_timer",
+    "type":"multi",
+    "name":"Timer Color",
+    "req":true,
+    "val":"Red", 
+    "opt":["Blue","Red", "Green","Cyan", "Magenta","Yellow","White"]}
+    ],
+    
+"wifi":[
+    {"id":"hotspot_SSID",
+    "type":"text",
+    "name":"Hotspot Name",
+    "req":true,
+    "val":"battlebots"},
+
+    {"id":"hotspot_password",
+    "type":"text",
+    "name":"Hotspot Password",
+    "req":false,
+    "val":"12345678"},
+
+    {"id":"local_URL",
+    "type":"text",
+    "name":"Local Address",
+    "desc":"Address for Web Interface. Must end in .local",
+    "val":"battlebots.local",
+    "req":true}
+    ]
+}

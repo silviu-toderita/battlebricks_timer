@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang=en>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="shortcut icon" href="/favicon.ico">
+        
+        <title> LEGO Battlebots </title>
+
+        <!--Load Bootstrap-->
+        <link rel='stylesheet' href='/lib/bs.css'>
+        <!--Load jQuery-->
+        <script src="/lib/jq.js"></script>
+        <!--Load Bootstrap Javascript (includes Popper)-->
+        <script src="/lib/bs.js"></script>
+
+        <!--Load Javascript-->
+        <script>
+            //Load the navbar
+            $.get("/nav", function(data){
+                $("#navigation").replaceWith(data);
+            });
+
+            //Load the settings form
+            $.get("/settings_data", function(data){
+                $("#settings").replaceWith(data);
+
+                //When the submit button is clicked, the settings form is POSTed to the ESP and an alert is displayed in the browser
+                $("#settings-form").submit(function(event){
+                    event.preventDefault();
+                    $("#submit-button").html("Saving...");
+                    $("#submit-button").prop('disabled', true);
+                    $.post("/settings_data", $("#settings-form").serialize(), function(data){
+                        alert("Settings Updated! Battlebots Timer is Restarting...");
+                        $("#submit-button").html("Save and Restart");
+                        $("#submit-button").prop('disabled', false);
+                    });
+                });
+
+            });
+
+            $(document).ready(function(){
+                //When the import button is clicked, click the choose file field to choose the file
+                $("#import-button").click(function(){
+                    $("#file").click();
+                })
+
+                //When the file has been chosen, POST it to the server 
+                $("#file").change(function(){
+                    var fd = new FormData();
+                    fd.append('file', $("#file")[0].files[0]);
+
+                    $.ajax({
+                        url: '/upload', 
+                        type: 'POST',
+                        data: fd, 
+                        processData: false,
+                        contentType: false
+                    }).done(function() {
+                        alert("Settings Updated! Battlebots Timer is Restarting...");
+                    });
+                })
+
+            });
+            
+        </script>
+
+    </head>
+
+    <body>
+        <!--This will be replaced with the navbar-->
+        <div id="navigation"></div>
+
+        <!--Main container-->
+        <main class="container" style="max-width: 550px;">
+            <header class="page-header header container mb-4">
+                <h2>Settings</h2>
+            </header>
+            
+            <!--Settings Area-->
+            <form id="settings-form" name="settings-form">
+                <!--This will be replaced with the dynamic settings form-->
+                <div id="settings">
+                    Loading Settings...
+                </div>
+                <!--Submit button for settings-->
+                <button type="submit" class="btn btn-dark float-right" id="submit-button">Save & Restart</button>
+            </form>
+
+            <!--Hidden file selector-->
+            <input type="file" style="display:none;" id="file" accept=".txt">
+            
+            <!--Import/Export dropdown-->
+            <div class="dropdown float-left mb-2">
+                <button class="btn btn-dark dropdown-toggle" type="button" id="dropdown-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Import/Export</button>
+                <div class="dropdown-menu" aria-labelledby="dropdown-button">
+                    <!--Import button-->
+                    <a class="dropdown-item" role="button" id="import-button">Import Settings & Restart</a>
+                    <!--Export button-->
+                    <a class="dropdown-item" role="button" href="/settings.txt" download="settings.txt">Export Settings</a>
+                </div> 
+            </div>
+
+        </main>
+        
+        
+
+    </body>
+</html> 

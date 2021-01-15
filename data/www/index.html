@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang=en>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink_to_fit=no">
+
+        <link rel="shortcut icon" href="/favicon.ico">
+        
+        <title> LEGO Battlebots </title>
+
+        <!--Load Bootstrap-->
+        <link rel='stylesheet' href='lib/bs.css'>
+        <!--Load jQuery-->
+        <script src="/lib/jq.js"></script>
+        <!--Load Bootstrap Javascript (includes Popper)-->
+        <script src="/lib/bs.js"></script>
+
+        <!--Javascript-->
+        <script>
+            
+            //Load the navbar
+            $.get("/nav", function(data){
+                $("#navigation").replaceWith(data);
+            });
+
+            $(document).ready(function(){
+                $("#restart-button").click(function(){
+                    event.preventDefault();
+                    $("#restart-button").html("Restarting...");
+                    $("#restart-button").prop('disabled', true);
+                    $.get("/restart", function(data){
+                        alert("Battlebots Timer is Restarting...");
+                        $("#restart-button").html("Restart");
+                        $("#restart-button").prop('disabled', false);
+                    });
+                })
+            });
+
+        </script>
+
+    </head>
+
+    <body>
+        <!--Navbar-->
+        <div id="navigation"></div>
+
+        <main class="container">
+            <img src="logo.png" class="img-fluid" alt="LEGO Battlebots">
+        </main>
+        <div class="container">
+            <button class="btn btn-dark float-left" id="restart-button">Restart</button>
+        </div>
+        
+    </body>
+</html> 
