@@ -8,7 +8,10 @@ Adafruit_NeoMatrix display_2 = Adafruit_NeoMatrix(8, 8, 2, 1, PIN_DISPLAY2, NEO_
 ESP8266WiFiMulti wifimulti;
 Web_Interface webinterface;
 
+// Interrupts Library
 Soft_ISR soft_isr;
+
+// Stores transient preferences
 Persistent_Storage prefs("pref");
 
 void text_handle(){
@@ -61,7 +64,7 @@ void ready(){
 }
 
 void num_players(){
-    state = 1;
+    state = READY;
 
     if(three_players) text("3 PLAYERS", GREEN, true);
     else text("2 PLAYERS", BLUE, true);
@@ -77,12 +80,44 @@ void msg_intro(){
 void wifi_loop(){
     display_1.clear();
     display_2.clear();
-    display_1.setBrightness(2);
-    display_2.setBrightness(1);
-    display_1.fillScreen(CYAN);
-    display_2.fillScreen(CYAN);
+    display_1.setBrightness(32);
+    display_2.setBrightness(24);
+    display_1.fillRect(14, 11, 4, 2, CYAN);
+    display_2.fillRect(7, 6, 2, 2, CYAN);
     display_1.show();
     display_2.show();
+    delay(500);
+    display_1.fillRect(14, 7, 4, 2, CYAN);
+    display_1.fillRect(12, 8, 2, 2, CYAN);
+    display_1.fillRect(18, 8, 2, 2, CYAN);
+    display_2.fillRect(7, 3, 2, 2, CYAN);
+    display_2.fillRect(5, 4, 2, 2, CYAN);
+    display_2.fillRect(9, 4, 2, 2, CYAN);
+    display_1.show();
+    display_2.show();
+    delay(500);
+    display_1.fillRect(12, 3, 8, 2, CYAN);
+    display_1.fillRect(10, 4, 2, 2, CYAN);
+    display_1.fillRect(20, 4, 2, 2, CYAN);
+    display_2.fillRect(6, 0, 4, 2, CYAN);
+    display_2.fillRect(4, 1, 2, 2, CYAN);
+    display_2.fillRect(10, 1, 2, 2, CYAN);
+    display_1.show();
+    display_2.show();
+
+    WiFi.mode(WIFI_AP);
+
+    String SSID = webinterface.load_setting("hotspot_SSID");
+    if(SSID == ""){
+        WiFi.softAP("battlebots","12345678");
+    }else{
+        String password = webinterface.load_setting("hotspot_password");
+        if(password.length() < 8){
+            WiFi.softAP(SSID);
+        }else{
+            WiFi.softAP(SSID, password);
+        }
+    }
 
     //Load local_URL and filter out prefix and suffix
     String local_URL = webinterface.load_setting("local_URL");
@@ -92,12 +127,30 @@ void wifi_loop(){
     if(local_URL == "") local_URL = "battlebots";
     MDNS.begin(local_URL);
 
+    uint64_t button_pressed_time;
+    bool button_pressed = false;
+
     while(true){
         MDNS.update();
         webinterface.handle();
         yield();
+
+        if(button_pressed){
+            button_pressed = !digitalRead(PIN_BTN_BLACK);
+            if(millis() >= button_pressed_time + 3000){
+                break;
+            }
+        }else if(!digitalRead(PIN_BTN_BLACK)){
+            button_pressed = true;
+            button_pressed_time = millis();
+        }
     }
 }
+
+void start(){
+
+}
+
 
 // #############################################################################
 //   SETUP
@@ -131,34 +184,19 @@ void setup(){
 
     webinterface.begin();
 
+    if(!digitalRead(PIN_BTN_BLACK)){
+        wifi_loop();
+    }
+
+    WiFi.mode(WIFI_OFF);
+
     three_players = (prefs.get("num_players") == "3");
 
-    if(!digitalRead(PIN_BTN_BLACK)){
-        WiFi.mode(WIFI_AP);
-
-        String SSID = webinterface.load_setting("hotspot_SSID");
-        if(SSID == ""){
-            WiFi.softAP("battlebots","12345678");
-        }else{
-            String password = webinterface.load_setting("hotspot_password");
-            if(password.length() < 8){
-                WiFi.softAP(SSID);
-            }else{
-                WiFi.softAP(SSID, password);
-            }
-        }
-
-        text("HOTSPOT MODE", CYAN, true);
-        soft_isr.set_trigger(wifi_loop);
-
+    if(webinterface.load_setting("msg_intro") == ""){
+        num_players();
     }else{
-        WiFi.mode(WIFI_OFF);
-        if(webinterface.load_setting("msg_intro") == ""){
-            num_players();
-        }else{
-            msg_intro();
-        }
-    } 
+        msg_intro();
+    }
     
 }   
 
@@ -175,8 +213,12 @@ void loop(){
     soft_isr.handle();
 
     switch(state){
-        case 0:
-            if(btn_black_down || btn_red_down || btn_blue_down || btn_green_down) num_players();
+        case STARTUP:
+            break;
+        case READY:
+            break;
+        default:
+            break;
     }
 
     // UpdateMatrix Displays

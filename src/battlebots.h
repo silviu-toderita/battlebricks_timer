@@ -51,7 +51,7 @@ bool btn_green_down = false;
 #define RUNNING     2
 #define OVER        3
 
-uint8_t state = 0;
+uint8_t state = STARTUP;
 
 // Current text on screen
 int16_t text_xpos = 0;
