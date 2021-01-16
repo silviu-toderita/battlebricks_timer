@@ -70,6 +70,45 @@ void ready(){
     text(format_time(total_time), parse_color(webinterface.load_setting("color_timer")), false);
 }
 
+void show_brightness(){
+    display_1.setBrightness(brightness*10);
+    display_2.setBrightness(brightness*10);
+    display_1.clear();
+    display_2.clear();
+    display_1.drawCircle(8, 8, 3, WHITE);
+    display_1.drawLine(8, 3, 8, 2, WHITE);
+    display_1.drawLine(8, 13, 8, 14, WHITE);
+    display_1.drawLine(3, 8, 2, 8, WHITE);
+    display_1.drawLine(13, 8, 14, 8, WHITE);
+    display_1.drawLine(12, 12, 13, 13, WHITE);
+    display_1.drawLine(4, 4, 3, 3, WHITE);
+    display_1.drawLine(12, 4, 13, 3, WHITE);
+    display_1.drawLine(4, 12, 3, 13, WHITE);
+
+    display_2.drawLine(1, 1, 0, 0, WHITE);
+    display_2.drawLine(1, 6, 0, 7, WHITE);
+    display_2.drawLine(6, 1, 7, 0, WHITE);
+    display_2.drawLine(6, 6, 7, 7, WHITE);
+
+    display_2.drawRect(3, 0, 2, 3, WHITE);
+    display_2.drawRect(3, 5, 2, 3, WHITE);
+    display_2.drawRect(0, 3, 3, 2, WHITE);
+    display_2.drawRect(5, 3, 3, 2, WHITE);
+
+    display_2.drawRect(2, 2, 4, 4, WHITE);
+
+    display_2.drawPixel(0, 0, WHITE);
+    display_2.drawPixel(0, 7, WHITE);
+    display_2.drawPixel(7, 0, WHITE);
+    display_2.drawPixel(7, 7, WHITE);
+
+    display_1.show();
+    display_2.show();
+
+    delay(2000);
+    ready();
+}
+
 void num_players(){
     state = READY;
 
@@ -154,10 +193,6 @@ void wifi_loop(){
     }
 }
 
-void start(){
-
-}
-
 void load_settings(){
     String min_time_string = webinterface.load_setting("min_time");
     if(min_time_string == "0:15"){
@@ -208,6 +243,15 @@ void load_settings(){
     } 
     if(total_time > max_time) total_time = max_time;
     if(total_time < min_time) total_time = min_time;
+
+    String brightness_string = prefs.get("brightness");
+    if(brightness_string == ""){
+        brightness = 2;
+    }else{
+        brightness = brightness_string.toInt();
+        if(brightness > 8) brightness = 8;
+        if(brightness < 1) brightness = 1;
+    }
 }
 
 // #############################################################################
@@ -237,9 +281,6 @@ void setup(){
     display_1.begin();
     display_2.begin();
 
-    display_1.setBrightness(32);
-    display_2.setBrightness(32);
-
     webinterface.begin();
 
     if(!digitalRead(PIN_BTN_BLACK)){
@@ -249,6 +290,9 @@ void setup(){
     WiFi.mode(WIFI_OFF);
 
     load_settings();
+
+    display_1.setBrightness(brightness * 10);
+    display_2.setBrightness(brightness * 10);
 
     if(webinterface.load_setting("msg_intro") == ""){
         num_players();
@@ -273,13 +317,21 @@ void loop(){
         case STARTUP:
             if(black){
                 num_players();
+                btn_black_down = true;
             }
             break;
 
         case READY:
+            if(black && !btn_black_down){
+                ready();
+            }else if(!black && btn_black_down){
+                btn_black_down = false;
+            }
+
             if(red && !btn_red_down){
                 btn_red_down = true;
                 if(black){
+                    btn_black_down = true;
                     if(three_players){
                         three_players = false;
                         prefs.set("num_players", "2");
@@ -298,6 +350,7 @@ void loop(){
             if(green && !btn_green_down){
                 btn_green_down = true;
                 if(black){
+                    btn_black_down = true;
                     if(total_time + interval_time > max_time){
                         total_time = min_time;
                     }else{
@@ -310,6 +363,24 @@ void loop(){
                 }
             }else if(!green && btn_green_down){
                 btn_green_down = false;
+            }
+
+            if(blue && !btn_blue_down){
+                btn_blue_down = true;
+                if(black){
+                    btn_black_down = true;
+                    if(brightness == 8){
+                        brightness = 1;
+                    }else{
+                        brightness++;
+                    }
+                    prefs.set("brightness",String(brightness));
+                    show_brightness();
+                }else{
+                    // CODE FOR PLAYER BLUE READY
+                }
+            }else if(!blue && btn_blue_down){
+                btn_blue_down = false;
             }
 
             break;

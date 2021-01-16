@@ -65,3 +65,5 @@ uint16_t total_time = 90;
 uint16_t min_time = 30;
 uint16_t max_time = 180;
 uint8_t interval_time = 15;
+
+uint8_t brightness = 2;
