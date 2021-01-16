@@ -4,10 +4,8 @@
     "name":"Startup Message",
     "desc":"Leave this blank to skip startup message",
     "req":false,
-    "val":"LEGO BATTLEBOTS"}
-    ],
+    "val":"LEGO BATTLEBOTS"},
 
-"advanced":[
     {"id":"color_intro",
     "type":"multi",
     "name":"Startup Message Color",
@@ -17,10 +15,37 @@
 
     {"id":"color_timer",
     "type":"multi",
-    "name":"Timer Color",
+    "name":"Countdown Color",
     "req":true,
     "val":"Red", 
     "opt":["Blue","Red", "Green","Cyan", "Magenta","Yellow","White"]}
+    ],
+
+"advanced":[
+    {"id":"min_time",
+    "type":"multi",
+    "name":"Minimum Countdown Settings Time",
+    "req":true,
+    "desc":"Minimum value for countdown timer when changing settings during gameplay",
+    "val":"0:30", 
+    "opt":["0:15","0:30", "0:45","1:00", "1:30"]},
+
+    {"id":"max_time",
+    "type":"multi",
+    "name":"Maximum Countdown Settings Time",
+    "req":true,
+    "desc":"Maximum value for countdown timer when changing settings during gameplay",
+    "val":"3:00", 
+    "opt":["2:00","3:00", "4:00","5:00"]},
+
+    {"id":"interval_time",
+    "type":"multi",
+    "name":"Countdown Settings Interval Time",
+    "req":true,
+    "desc":"Value that countdown timer will increase when changing settings during gameplay",
+    "val":"0:15", 
+    "opt":["0:01","0:02", "0:05","0:10", "0:15","0:30"]}
+
     ],
     
 "wifi":[

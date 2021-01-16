@@ -59,4 +59,9 @@ bool text_scroll = false;
 uint16_t text_color = 0;
 String text_string = "";
 
+// Game prefs
 bool three_players = false;
+uint16_t total_time = 90;
+uint16_t min_time = 30;
+uint16_t max_time = 180;
+uint8_t interval_time = 15;

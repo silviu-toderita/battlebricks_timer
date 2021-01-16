@@ -59,8 +59,15 @@ uint16_t parse_color(String input){
     return WHITE;
 }
 
+String format_time(uint8_t time){
+    String minute = String(time / 60);
+    String second = String(time % 60);
+    if(second.length() == 1) second = "0" + second;
+    return minute + ":" + second;
+}
+
 void ready(){
-    text("1:30", parse_color(webinterface.load_setting("color_timer")), false);
+    text(format_time(total_time), parse_color(webinterface.load_setting("color_timer")), false);
 }
 
 void num_players(){
@@ -151,6 +158,57 @@ void start(){
 
 }
 
+void load_settings(){
+    String min_time_string = webinterface.load_setting("min_time");
+    if(min_time_string == "0:15"){
+        min_time = 15;
+    }else if(min_time_string == "0:45"){
+        min_time = 45;
+    }else if(min_time_string == "1:00"){
+        min_time = 60;
+    }else if(min_time_string == "1:30"){
+        min_time = 90;
+    }else{
+        min_time = 30;
+    }
+
+    String max_time_string = webinterface.load_setting("max_time");
+    if(max_time_string == "2:00"){
+        max_time = 120;
+    }else if(max_time_string == "4:00"){
+        max_time = 240;
+    }else if(max_time_string == "5:00"){
+        max_time = 300;
+    }else{
+        max_time = 180;
+    }
+
+    String interval_time_string = webinterface.load_setting("interval_time");
+    if(interval_time_string == "0:01"){
+        interval_time = 1;
+    }else if(interval_time_string == "0:02"){
+        interval_time = 2;
+    }else if(interval_time_string == "0:05"){
+        interval_time = 5;
+    }else if(interval_time_string == "0:10"){
+        interval_time = 10;
+    }else if(interval_time_string == "0:30"){
+        interval_time = 30;
+    }else{
+        interval_time = 15;
+    }
+
+    three_players = (prefs.get("num_players") == "3");
+
+    String total_time_string = (prefs.get("total_time"));
+    if(total_time_string == ""){
+        total_time = 90;
+    }else{
+        total_time = total_time_string.toInt();
+    } 
+    if(total_time > max_time) total_time = max_time;
+    if(total_time < min_time) total_time = min_time;
+}
 
 // #############################################################################
 //   SETUP
@@ -190,7 +248,7 @@ void setup(){
 
     WiFi.mode(WIFI_OFF);
 
-    three_players = (prefs.get("num_players") == "3");
+    load_settings();
 
     if(webinterface.load_setting("msg_intro") == ""){
         num_players();
@@ -204,19 +262,58 @@ void setup(){
 //   LOOP
 // #############################################################################
 void loop(){
-
-    btn_black_down = !digitalRead(PIN_BTN_BLACK);
-    btn_red_down = !digitalRead(PIN_BTN_RED);
-    btn_blue_down = !digitalRead(PIN_BTN_BLUE);
-    btn_green_down = !digitalRead(PIN_BTN_GREEN);
-
     soft_isr.handle();
+
+    bool black = !digitalRead(PIN_BTN_BLACK);
+    bool red = !digitalRead(PIN_BTN_RED);
+    bool blue = !digitalRead(PIN_BTN_BLUE);
+    bool green = !digitalRead(PIN_BTN_GREEN);
 
     switch(state){
         case STARTUP:
+            if(black){
+                num_players();
+            }
             break;
+
         case READY:
+            if(red && !btn_red_down){
+                btn_red_down = true;
+                if(black){
+                    if(three_players){
+                        three_players = false;
+                        prefs.set("num_players", "2");
+                    }else{
+                        three_players = true;
+                        prefs.set("num_players", "3");
+                    }
+                    num_players();
+                }else{
+                    // CODE FOR PLAYER RED READY
+                }
+            }else if(!red && btn_red_down){
+                btn_red_down = false;
+            }
+
+            if(green && !btn_green_down){
+                btn_green_down = true;
+                if(black){
+                    if(total_time + interval_time > max_time){
+                        total_time = min_time;
+                    }else{
+                        total_time = total_time + interval_time;
+                    }
+                    prefs.set("num_players", String(total_time));
+                    ready();
+                }else{
+                    // CODE FOR PLAYER GREEN READY
+                }
+            }else if(!green && btn_green_down){
+                btn_green_down = false;
+            }
+
             break;
+
         default:
             break;
     }
