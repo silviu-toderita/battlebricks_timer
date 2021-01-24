@@ -3,6 +3,7 @@
 // Silviu's Libraries
 #include "Soft_ISR.h"
 #include "Persistent_Storage.h"
+#include "Button.h"
 
 // Graphics Libraries 
 #include "Adafruit_GFX.h"
@@ -29,11 +30,6 @@
 #define PIN_BTN_BLACK 5
 #define PIN_BTN_BLUE 4
 #define PIN_BTN_GREEN 0
-
-bool btn_red_down = false;
-bool btn_black_down = false;
-bool btn_blue_down = false;
-bool btn_green_down = false;
 
 // Color Definitions
 #define BLACK    0x0000

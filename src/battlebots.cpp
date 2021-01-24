@@ -14,19 +14,56 @@ Soft_ISR soft_isr;
 // Stores transient preferences
 Persistent_Storage prefs("pref");
 
-void text_handle(){
+// Button objects
+Button btn_black(PIN_BTN_BLACK, true);
+Button btn_blue(PIN_BTN_BLUE, true);
+Button btn_red(PIN_BTN_RED, true);
+Button btn_green(PIN_BTN_GREEN, true);
+
+void text_handle_scroll(){
     if(text_scroll){
         text_xpos--;
-    }
 
-    int16_t text_length = text_string.length() * 8;
-    if(text_xpos < -text_length){
-        text_xpos = 32;
-        soft_isr.trigger();
-    }
+        int16_t text_length = text_string.length() * 8;
+        if(text_xpos < -text_length){
+            text_xpos = 32;
+            soft_isr.trigger();
+            return;
+        }
 
-    display_1.setCursor(text_xpos, 12);
-    display_2.setCursor(text_xpos/2, 6);
+        display_1.clear();
+        display_2.clear();
+
+        display_1.setCursor(text_xpos, 12);
+        display_2.setCursor(text_xpos/2, 6);
+
+        display_1.setFont(&Picopixel);
+        display_2.setFont(&Picopixel);
+        display_1.setTextSize(2);
+        display_2.setTextSize(1);
+        display_1.setTextWrap(false);
+        display_2.setTextWrap(false);
+
+        display_1.setTextColor(text_color);
+        display_2.setTextColor(text_color);
+        display_1.print(text_string);
+        display_2.print(text_string);
+
+        display_1.show();
+        display_2.show();
+    }
+    
+}
+
+void text_static(String text, uint16_t color){
+    Serial.println("Printing Static Text: " + text);
+    text_scroll = false;
+
+    display_1.clear();
+    display_2.clear();
+
+    display_1.setCursor((15 - (text.length() * 3)), 12);
+    display_2.setCursor((15 - (text.length() * 3))/2, 6);
 
     display_1.setFont(&Picopixel);
     display_2.setFont(&Picopixel);
@@ -35,18 +72,22 @@ void text_handle(){
     display_1.setTextWrap(false);
     display_2.setTextWrap(false);
 
-    display_1.setTextColor(text_color);
-    display_2.setTextColor(text_color);
-    display_1.print(text_string);
-    display_2.print(text_string);
-    
+    display_1.setTextColor(color);
+    display_2.setTextColor(color);
+    display_1.print(text);
+    display_2.print(text);
+
+    display_1.show();
+    display_2.show();
+
 }
 
-void text(String text, uint16_t color, bool scroll){
-    text_xpos = scroll? 32 : (15 - (text.length() * 3));
+void text_dynamic(String text, uint16_t color){
+    Serial.println("Printing Dynamic Text: " + text);
+    text_xpos = 32;
     text_color = color;
     text_string = text;
-    text_scroll = scroll;
+    text_scroll = true;
 }
 
 uint16_t parse_color(String input){
@@ -67,7 +108,7 @@ String format_time(uint8_t time){
 }
 
 void ready(){
-    text(format_time(total_time), parse_color(webinterface.load_setting("color_timer")), false);
+    text_static(format_time(total_time), parse_color(webinterface.load_setting("color_timer")));
 }
 
 void show_brightness(){
@@ -89,37 +130,49 @@ void show_brightness(){
     display_2.drawLine(1, 6, 0, 7, WHITE);
     display_2.drawLine(6, 1, 7, 0, WHITE);
     display_2.drawLine(6, 6, 7, 7, WHITE);
-
     display_2.drawRect(3, 0, 2, 3, WHITE);
     display_2.drawRect(3, 5, 2, 3, WHITE);
     display_2.drawRect(0, 3, 3, 2, WHITE);
     display_2.drawRect(5, 3, 3, 2, WHITE);
-
     display_2.drawRect(2, 2, 4, 4, WHITE);
-
     display_2.drawPixel(0, 0, WHITE);
     display_2.drawPixel(0, 7, WHITE);
     display_2.drawPixel(7, 0, WHITE);
     display_2.drawPixel(7, 7, WHITE);
 
+    display_1.setCursor(21,12);
+    display_2.setCursor(11,6);
+
+    display_1.setFont(&Picopixel);
+    display_2.setFont(&Picopixel);
+    display_1.setTextSize(2);
+    display_2.setTextSize(1);
+    display_1.setTextWrap(false);
+    display_2.setTextWrap(false);
+
+    display_1.setTextColor(WHITE);
+    display_2.setTextColor(WHITE);
+    display_1.print(String(brightness));
+    display_2.print(String(brightness));
+
     display_1.show();
     display_2.show();
 
-    delay(2000);
-    ready();
+    soft_isr.set_timer(ready,1000);
+
 }
 
 void num_players(){
     state = READY;
 
-    if(three_players) text("3 PLAYERS", GREEN, true);
-    else text("2 PLAYERS", BLUE, true);
+    if(three_players) text_dynamic("3 PLAYERS", GREEN);
+    else text_dynamic("2 PLAYERS", BLUE);
     soft_isr.set_trigger(ready);
     
 }
 
 void msg_intro(){
-    text(webinterface.load_setting("msg_intro"), parse_color(webinterface.load_setting("color_intro")), true);
+    text_dynamic(webinterface.load_setting("msg_intro"), parse_color(webinterface.load_setting("color_intro")));
     soft_isr.set_trigger(num_players);
 }
 
@@ -254,6 +307,91 @@ void load_settings(){
     }
 }
 
+void black_btn_press(){
+    Serial.println("Black button pressed!");
+    switch(state){
+        case STARTUP:
+            num_players();
+            break;
+
+        case READY:
+            ready();
+            break;
+        
+        default: break;
+    }
+}
+
+void green_btn_press(){
+    switch(state){
+        case STARTUP: break;
+
+        case READY:
+            if(btn_black.get()){
+                if(total_time + interval_time > max_time){
+                    total_time = min_time;
+                }else{
+                    total_time = total_time + interval_time;
+                }
+                prefs.set("num_players", String(total_time));
+                ready();
+            }else{
+
+            }
+            break;
+        
+        default:
+            break;
+    }
+}
+
+void blue_btn_press(){
+    switch(state){
+        case STARTUP: break;
+
+        case READY:
+            if(btn_black.get()){
+                if(brightness == 8){
+                    brightness = 1;
+                }else{
+                    brightness++;
+                }
+                prefs.set("brightness",String(brightness));
+                show_brightness();
+            }else{
+
+            }
+            break;
+        
+        default:
+            break;
+    }
+}
+
+void red_btn_press(){
+    switch(state){
+        case STARTUP: break;
+
+        case READY:
+            if(btn_black.get()){
+                if(three_players){
+                        three_players = false;
+                        prefs.set("num_players", "2");
+                    }else{
+                        three_players = true;
+                        prefs.set("num_players", "3");
+                    }
+                num_players();
+            }else{
+
+            }
+            break;
+        
+        default:
+            break;
+    }
+}
+
 // #############################################################################
 //   SETUP
 // #############################################################################
@@ -263,11 +401,6 @@ void setup(){
     Serial.println("");
     
     // Initialize GPIO
-    pinMode(PIN_BTN_BLACK, INPUT_PULLUP);
-    pinMode(PIN_BTN_BLUE, INPUT_PULLUP);
-    pinMode(PIN_BTN_GREEN, INPUT_PULLUP);
-    pinMode(PIN_BTN_RED, INPUT_PULLUP);
-
     pinMode(PIN_LED_RED, OUTPUT);
     pinMode(PIN_LED_BLUE, OUTPUT);
     pinMode(PIN_BUZZER, OUTPUT);
@@ -276,6 +409,12 @@ void setup(){
     digitalWrite(PIN_LED_RED, LOW);
     digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(PIN_BUZZER, LOW);
+
+    // Set button callbacks
+    btn_black.set_posedge_cb(black_btn_press);
+    btn_blue.set_posedge_cb(blue_btn_press);
+    btn_green.set_posedge_cb(green_btn_press);
+    btn_red.set_posedge_cb(red_btn_press);
   
     // Initialize Matrix displays
     display_1.begin();
@@ -307,94 +446,11 @@ void setup(){
 // #############################################################################
 void loop(){
     soft_isr.handle();
+    btn_black.handle();
+    btn_blue.handle();
+    btn_red.handle();
+    btn_green.handle();
 
-    bool black = !digitalRead(PIN_BTN_BLACK);
-    bool red = !digitalRead(PIN_BTN_RED);
-    bool blue = !digitalRead(PIN_BTN_BLUE);
-    bool green = !digitalRead(PIN_BTN_GREEN);
+    text_handle_scroll();
 
-    switch(state){
-        case STARTUP:
-            if(black){
-                num_players();
-                btn_black_down = true;
-            }
-            break;
-
-        case READY:
-            if(black && !btn_black_down){
-                ready();
-            }else if(!black && btn_black_down){
-                btn_black_down = false;
-            }
-
-            if(red && !btn_red_down){
-                btn_red_down = true;
-                if(black){
-                    btn_black_down = true;
-                    if(three_players){
-                        three_players = false;
-                        prefs.set("num_players", "2");
-                    }else{
-                        three_players = true;
-                        prefs.set("num_players", "3");
-                    }
-                    num_players();
-                }else{
-                    // CODE FOR PLAYER RED READY
-                }
-            }else if(!red && btn_red_down){
-                btn_red_down = false;
-            }
-
-            if(green && !btn_green_down){
-                btn_green_down = true;
-                if(black){
-                    btn_black_down = true;
-                    if(total_time + interval_time > max_time){
-                        total_time = min_time;
-                    }else{
-                        total_time = total_time + interval_time;
-                    }
-                    prefs.set("num_players", String(total_time));
-                    ready();
-                }else{
-                    // CODE FOR PLAYER GREEN READY
-                }
-            }else if(!green && btn_green_down){
-                btn_green_down = false;
-            }
-
-            if(blue && !btn_blue_down){
-                btn_blue_down = true;
-                if(black){
-                    btn_black_down = true;
-                    if(brightness == 8){
-                        brightness = 1;
-                    }else{
-                        brightness++;
-                    }
-                    prefs.set("brightness",String(brightness));
-                    show_brightness();
-                }else{
-                    // CODE FOR PLAYER BLUE READY
-                }
-            }else if(!blue && btn_blue_down){
-                btn_blue_down = false;
-            }
-
-            break;
-
-        default:
-            break;
-    }
-
-    // UpdateMatrix Displays
-    display_1.clear();
-    display_2.clear();
-
-    text_handle();
-
-    display_1.show();
-    display_2.show();
 }
