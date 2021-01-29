@@ -189,7 +189,7 @@ String multi_input_html(String id, String val, String type, JsonArray opt){
         //Create the On option
         response += "<option value=true";
         //If the current value is true, pre-select the Yes option
-        if(val){
+        if(val == "trueselected"){
             response += "selected";
         }
         response +=">On</option>";
@@ -197,7 +197,7 @@ String multi_input_html(String id, String val, String type, JsonArray opt){
         //Create the Off option
         response += "<option value=false";
         //If the current value is false, pre-select the No option
-        if(!val){
+        if(val == "false"){
             response += "selected";
         }
         response +=">Off</option>";

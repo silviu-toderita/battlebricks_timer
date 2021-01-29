@@ -32,14 +32,18 @@
 #define PIN_BTN_GREEN 0
 
 // Color Definitions
-#define BLACK    0x0000
-#define BLUE     0x001F
-#define RED      0xF800
-#define GREEN    0x07E0
-#define CYAN     0x07FF
-#define MAGENTA  0xF81F
-#define YELLOW   0xFFE0 
-#define WHITE    0xFFFF
+#define BLACK       0x0000
+#define BLUE        0x001F
+#define RED         0xF800
+#define GREEN       0x07E0
+#define CYAN        0x07FF
+#define MAGENTA     0xF81F
+#define YELLOW      0xFFE0 
+#define WHITE       0xFFFF
+
+uint16_t blue_dim = 0x0011;
+uint16_t red_dim = 0x8000;
+uint16_t green_dim = 0x0300;
 
 // States
 #define STARTUP     0
@@ -55,15 +59,29 @@ bool text_scroll = false;
 uint16_t text_color = 0;
 String text_string = "";
 
+// Current graphics on screen
+bool show_brightness = false;
+
 // Game prefs
-bool three_players = false;
 uint16_t total_time = 90;
 uint16_t min_time = 30;
 uint16_t max_time = 180;
 uint8_t interval_time = 15;
 
+// Global prefs
 uint8_t brightness = 2;
+bool show_aux_lights = true;
+bool show_ready = true;
+uint8_t pre_time = 5;
+uint8_t go_time = 2;
 
+// Players
+bool three_players = false;
+bool blue_ready = false;
+bool red_ready = false;
+bool green_ready = false;
+
+// Graphics
 const PROGMEM uint8_t bmp_wifi_l[] = {  0x0F, 0xF0, 0x3F, 0xFC, 0x30, 0x0C, 0x03, 0xC0, 
                                         0x0F, 0xF0, 0x0C, 0x30, 0x00, 0x00, 0x03, 0xC0, 
                                         0x03, 0xC0}; 

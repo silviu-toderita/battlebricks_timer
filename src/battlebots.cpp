@@ -20,7 +20,39 @@ Button btn_blue(PIN_BTN_BLUE, true);
 Button btn_red(PIN_BTN_RED, true);
 Button btn_green(PIN_BTN_GREEN, true);
 
-void text_handle_scroll(){
+void players_handle(){
+    if(three_players){
+        display_1.drawRect(8,0,16,2,green_ready ? GREEN : green_dim);
+        display_2.drawLine(4,0,11,0,green_ready ? GREEN : green_dim);
+        if(show_aux_lights){
+            display_1.drawRect(0,0,6,2,blue_ready ? BLUE : blue_dim);
+            display_2.drawLine(13,0,15,0,blue_ready ? BLUE : blue_dim);
+            display_1.drawRect(26,0,6,2,red_ready ? RED : red_dim);
+            display_2.drawLine(0,0,2,0,red_ready ? RED : red_dim);
+        }
+    }else if(show_aux_lights){
+        display_1.drawRect(0,0,14,2,blue_ready ? BLUE : blue_dim);
+        display_2.drawLine(9,0,15,0,blue_ready ? BLUE : blue_dim);
+
+        display_1.drawRect(18,0,14,2,red_ready ? RED : red_dim);
+        display_2.drawLine(0,0,6,0,red_ready ? RED : red_dim);
+    }
+
+    if(blue_ready) digitalWrite(PIN_LED_BLUE, HIGH);
+    else digitalWrite(PIN_LED_BLUE, LOW);
+
+    if(red_ready) digitalWrite(PIN_LED_RED, HIGH);
+    else digitalWrite(PIN_LED_RED, LOW);
+}
+
+void brightness_handle(){
+    if(show_brightness){
+        display_1.drawBitmap(1,2,bmp_brightness_l,16,13,WHITE);
+        display_2.drawBitmap(0,0,bmp_brightness_s,8,8,WHITE);
+    }
+}
+
+void text_handle(){
     if(text_scroll){
         text_xpos--;
 
@@ -30,40 +62,10 @@ void text_handle_scroll(){
             soft_isr.trigger();
             return;
         }
-
-        display_1.clear();
-        display_2.clear();
-
-        display_1.setCursor(text_xpos, 12);
-        display_2.setCursor(text_xpos/2, 6);
-
-        display_1.setFont(&Picopixel);
-        display_2.setFont(&Picopixel);
-        display_1.setTextSize(2);
-        display_2.setTextSize(1);
-        display_1.setTextWrap(false);
-        display_2.setTextWrap(false);
-
-        display_1.setTextColor(text_color);
-        display_2.setTextColor(text_color);
-        display_1.print(text_string);
-        display_2.print(text_string);
-
-        display_1.show();
-        display_2.show();
     }
-    
-}
 
-void text_static(String text, uint16_t color){
-    Serial.println("Printing Static Text: " + text);
-    text_scroll = false;
-
-    display_1.clear();
-    display_2.clear();
-
-    display_1.setCursor((15 - (text.length() * 3)), 12);
-    display_2.setCursor((15 - (text.length() * 3))/2, 6);
+    display_1.setCursor(text_xpos, 12);
+    display_2.setCursor(text_xpos/2, 6);
 
     display_1.setFont(&Picopixel);
     display_2.setFont(&Picopixel);
@@ -72,18 +74,28 @@ void text_static(String text, uint16_t color){
     display_1.setTextWrap(false);
     display_2.setTextWrap(false);
 
-    display_1.setTextColor(color);
-    display_2.setTextColor(color);
-    display_1.print(text);
-    display_2.print(text);
+    display_1.setTextColor(text_color);
+    display_2.setTextColor(text_color);
+    display_1.print(text_string);
+    display_2.print(text_string);
+    
+}
 
-    display_1.show();
-    display_2.show();
+void text_static(String text, uint16_t color){
+    text_scroll = false;
+    text_xpos = 15 - (text.length() * 3);
+    text_color = color;
+    text_string = text;
+}
 
+void text_static(String text, uint16_t color, uint8_t xpos){
+    text_scroll = false;
+    text_xpos = xpos;
+    text_color = color;
+    text_string = text;
 }
 
 void text_dynamic(String text, uint16_t color){
-    Serial.println("Printing Dynamic Text: " + text);
     text_xpos = 32;
     text_color = color;
     text_string = text;
@@ -108,38 +120,8 @@ String format_time(uint8_t time){
 }
 
 void ready(){
+    show_brightness = false;
     text_static(format_time(total_time), parse_color(webinterface.load_setting("color_timer")));
-}
-
-void show_brightness(){
-    display_1.setBrightness(brightness*10);
-    display_2.setBrightness(brightness*10);
-    display_1.clear();
-    display_2.clear();
-    display_1.drawBitmap(1,2,bmp_brightness_l,16,13,WHITE);
-
-    display_2.drawBitmap(0,0,bmp_brightness_s,8,8,WHITE);
-
-    display_1.setCursor(21,12);
-    display_2.setCursor(11,6);
-
-    display_1.setFont(&Picopixel);
-    display_2.setFont(&Picopixel);
-    display_1.setTextSize(2);
-    display_2.setTextSize(1);
-    display_1.setTextWrap(false);
-    display_2.setTextWrap(false);
-
-    display_1.setTextColor(WHITE);
-    display_2.setTextColor(WHITE);
-    display_1.print(String(brightness));
-    display_2.print(String(brightness));
-
-    display_1.show();
-    display_2.show();
-
-    soft_isr.set_timer(ready,1000);
-
 }
 
 void num_players(){
@@ -267,6 +249,25 @@ void load_settings(){
         if(brightness > 8) brightness = 8;
         if(brightness < 1) brightness = 1;
     }
+
+    String show_aux_lights_string = webinterface.load_setting("show_aux_lights");
+    show_aux_lights = show_aux_lights_string == "trueselected" || show_aux_lights_string == "true";
+    String show_ready_string = webinterface.load_setting("show_ready");
+    show_ready = show_ready_string == "trueselected" || show_ready_string == "true";
+    String show_dim_lights_string = webinterface.load_setting("show_dim_lights");
+    if(show_dim_lights_string == "falseselected" || show_dim_lights_string == "false"){
+        blue_dim = 0x0000;
+        red_dim = 0x0000;
+        green_dim = 0x0000;
+    }
+
+    String pre_time_string = webinterface.load_setting("pre_time");
+    if(pre_time_string == "Off") pre_time = 0;
+    else pre_time = pre_time_string.substring(0,1).toInt();
+
+    String go_time_string = webinterface.load_setting("go_time");
+    if(go_time_string == "Off") go_time = 0;
+    else go_time = go_time_string.substring(0,1).toInt();
 }
 
 void black_btn_press(){
@@ -277,6 +278,7 @@ void black_btn_press(){
             break;
 
         case READY:
+            show_brightness = false;
             ready();
             break;
         
@@ -295,10 +297,17 @@ void green_btn_press(){
                 }else{
                     total_time = total_time + interval_time;
                 }
-                prefs.set("num_players", String(total_time));
+                prefs.set("total_time", String(total_time));
                 ready();
-            }else{
-
+            }else if(three_players){
+                if(green_ready) green_ready = false;
+                else {
+                    green_ready = true;
+                    if(show_ready){
+                        text_dynamic("GREEN READY", GREEN);
+                        soft_isr.set_trigger(ready);
+                    }
+                }
             }
             break;
         
@@ -318,10 +327,21 @@ void blue_btn_press(){
                 }else{
                     brightness++;
                 }
+                display_1.setBrightness(brightness*10+10);
+                display_2.setBrightness(brightness*10);
                 prefs.set("brightness",String(brightness));
-                show_brightness();
+                text_static(String(brightness),WHITE,20);
+                show_brightness = true;
+                soft_isr.set_timer(ready,1000);
             }else{
-
+                if(blue_ready) blue_ready = false;
+                else {
+                    blue_ready = true;
+                    if(show_ready){
+                        text_dynamic("BLUE READY", BLUE);
+                        soft_isr.set_trigger(ready);
+                    }
+                }
             }
             break;
         
@@ -338,6 +358,7 @@ void red_btn_press(){
             if(btn_black.get()){
                 if(three_players){
                         three_players = false;
+                        green_ready = false;
                         prefs.set("num_players", "2");
                     }else{
                         three_players = true;
@@ -345,7 +366,14 @@ void red_btn_press(){
                     }
                 num_players();
             }else{
-
+                if(red_ready) red_ready = false;
+                else {
+                    red_ready = true;
+                    if(show_ready){
+                        text_dynamic("RED READY", RED);
+                        soft_isr.set_trigger(ready);
+                    }
+                }
             }
             break;
         
@@ -392,7 +420,7 @@ void setup(){
 
     load_settings();
 
-    display_1.setBrightness(brightness * 10);
+    display_1.setBrightness(brightness * 10 + 10);
     display_2.setBrightness(brightness * 10);
 
     if(webinterface.load_setting("msg_intro") == ""){
@@ -408,11 +436,20 @@ void setup(){
 // #############################################################################
 void loop(){
     soft_isr.handle();
+
     btn_black.handle();
     btn_blue.handle();
     btn_red.handle();
     btn_green.handle();
 
-    text_handle_scroll();
+    display_1.clear();
+    display_2.clear();
+    text_handle();
+    if(!text_scroll){
+        brightness_handle();
+        if(!show_brightness) players_handle();
+    }
+    display_1.show();
+    display_2.show();
 
 }
