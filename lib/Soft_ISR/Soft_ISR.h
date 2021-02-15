@@ -17,7 +17,8 @@ class Soft_ISR{
             set_trigger(void_function_pointer),
             set_timer(void_function_pointer, uint32_t),
             trigger(),
-            handle();
+            handle(),
+            remove();
 
     private:
 

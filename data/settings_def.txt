@@ -13,6 +13,13 @@
     "val":"White", 
     "opt":["Blue","Red", "Green","Cyan", "Magenta","Yellow","White"]},
 
+    {"id":"color_pre",
+    "type":"multi",
+    "name":"Pre-Countdown Message Color",
+    "req":true,
+    "val":"Yellow", 
+    "opt":["Blue","Red", "Green","Cyan", "Magenta","Yellow","White"]},
+
     {"id":"color_timer",
     "type":"multi",
     "name":"Countdown Color",
@@ -70,7 +77,7 @@
     "name":"Pre-Start Time",
     "req":true,
     "val":"5 Seconds",
-    "desc":"The amount of time that 'READY' is displayed on the screen before the pre-countdown to the start",
+    "desc":"The amount of time that 'GET READY...' is scrolled on the screen before the pre-countdown to the start",
     "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds","9 Seconds","10 Seconds"]},
 
     {"id":"go_time",

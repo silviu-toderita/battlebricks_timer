@@ -47,9 +47,10 @@ uint16_t green_dim = 0x0300;
 
 // States
 #define STARTUP     0
-#define READY       1
-#define RUNNING     2
-#define OVER        3
+#define STANDBY     1
+#define PRE         2
+#define COUNTDOWN   3
+#define PAUSED      4
 
 uint8_t state = STARTUP;
 
@@ -67,6 +68,7 @@ uint16_t total_time = 90;
 uint16_t min_time = 30;
 uint16_t max_time = 180;
 uint8_t interval_time = 15;
+uint16_t time_remaining;
 
 // Global prefs
 uint8_t brightness = 2;
@@ -74,6 +76,8 @@ bool show_aux_lights = true;
 bool show_ready = true;
 uint8_t pre_time = 5;
 uint8_t go_time = 2;
+uint16_t color_timer = RED;
+uint16_t color_pre = YELLOW;
 
 // Players
 bool three_players = false;

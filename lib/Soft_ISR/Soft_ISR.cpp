@@ -16,8 +16,14 @@ void Soft_ISR::set_timer(void_function_pointer do_callback_in, uint32_t time){
 }
 
 void Soft_ISR::trigger(){
+    if(enabled) {
+        enabled = false;
+        do_callback();
+    }
+}
+
+void Soft_ISR::remove(){
     enabled = false;
-    do_callback();
 }
 
 void Soft_ISR::handle(){
