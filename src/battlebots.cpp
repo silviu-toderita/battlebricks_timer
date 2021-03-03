@@ -110,12 +110,12 @@ void text_dynamic(String text, uint16_t color){
 // Parse color from string
 uint16_t parse_color(String input){
     if(input == "Blue") return BLUE;
-    if(input == "Red") return RED;
+    if(input == "White") return WHITE;
     if(input == "Green") return GREEN;
     if(input == "Cyan") return CYAN;
     if(input == "Magenta") return MAGENTA;
     if(input == "Yellow") return YELLOW;
-    return WHITE;
+    return RED;
 }
 
 // Format time correctly for a timer
@@ -128,9 +128,38 @@ String format_time(uint8_t time, bool colon){
 }
 
 void ready();
+void standby();
 void countdown_a();
 
+void reset(){
+    state = STANDBY;
+    soft_isr.remove();
+    red_ready = false;
+    blue_ready = false;
+    green_ready = false;
+    standby();
+}
+
+void post_game_over(){
+    if(auto_reset) {
+        reset();
+    } else{
+        text_static("0:00", color_timer);
+    }
+}
+
+void game_over(){
+    state = GAME_OVER;
+    if(game_over_time > 0) {
+        text_dynamic(msg_game_over,RED);
+        soft_isr.set_timer(post_game_over,game_over_time*1000);
+    }else{
+        post_game_over();
+    }
+}
+
 void resume(){
+    state = COUNTDOWN;
     ready();
 }
 
@@ -142,7 +171,12 @@ void pause(){
 
 void countdown_b(){
     text_static(format_time(time_remaining, false), color_timer);
-    soft_isr.set_timer(countdown_a,500);
+    if(time_remaining == 1) {
+        soft_isr.set_timer(game_over,500);
+    } else {
+        soft_isr.set_timer(countdown_a,500);
+    }
+    
 }
 
 void countdown_a(){
@@ -192,7 +226,7 @@ void pre_countdown_3(){
 void ready(){
     if(state == STANDBY) state = PRE;
     if(pre_time > 0){
-        text_dynamic("GET READY...",color_pre);
+        text_dynamic(msg_get_ready,color_pre);
         soft_isr.set_timer(pre_countdown_3,pre_time*1000);
     }else{
         pre_countdown_3();
@@ -216,18 +250,9 @@ void num_players(){
 }
 
 // Intro message
-void msg_intro(){
-    text_dynamic(webinterface.load_setting("msg_intro"), parse_color(webinterface.load_setting("color_intro")));
+void intro(){
+    text_dynamic(msg_intro, color_intro);
     soft_isr.set_trigger(num_players);
-}
-
-void reset(){
-    state = STANDBY;
-    soft_isr.remove();
-    red_ready = false;
-    blue_ready = false;
-    green_ready = false;
-    standby();
 }
 
 // Check if enough players are ready to start the game
@@ -253,6 +278,7 @@ void check_players_ready(){
 
 // Handler for black button press
 void black_btn_press(){
+    uint32_t start_time = millis();
     switch(state){
         case STARTUP:
             num_players();
@@ -272,7 +298,17 @@ void black_btn_press(){
             break;
 
         case PAUSED:
+            while(btn_black.get()){
+                if(millis() > start_time + 2000){
+                    reset();
+                    break;
+                }
+            }
             resume();
+            break;
+        
+        case GAME_OVER:
+            reset();
             break;
 
         default: break;
@@ -294,11 +330,14 @@ void green_btn_press(){
                 prefs.set("total_time", String(total_time));
                 standby();
             }else if(three_players){
-                if(green_ready) green_ready = false;
-                else {
+                if(green_ready){
+                    green_ready = false;
+                    players_handle();
+                } else {
                     green_ready = true;
+                    players_handle();
                     if(show_ready){
-                        text_dynamic("GREEN STANDBY", GREEN);
+                        text_dynamic("GREEN READY", GREEN);
                         soft_isr.set_trigger(standby);
                     }
                     check_players_ready();
@@ -330,11 +369,14 @@ void blue_btn_press(){
                 show_brightness = true;
                 soft_isr.set_timer(standby,1000);
             }else{
-                if(blue_ready) blue_ready = false;
-                else {
+                if(blue_ready){
+                    blue_ready = false;
+                    players_handle();
+                } else {
                     blue_ready = true;
+                    players_handle();
                     if(show_ready){
-                        text_dynamic("BLUE STANDBY", BLUE);
+                        text_dynamic("BLUE READY", BLUE);
                         soft_isr.set_trigger(standby);
                     }
                     check_players_ready();
@@ -364,11 +406,14 @@ void red_btn_press(){
                     }
                 num_players();
             }else{
-                if(red_ready) red_ready = false;
-                else {
+                if(red_ready){
+                    red_ready = false;
+                    players_handle();
+                } else {
                     red_ready = true;
+                    players_handle();
                     if(show_ready){
-                        text_dynamic("RED STANDBY", RED);
+                        text_dynamic("RED READY", RED);
                         soft_isr.set_trigger(standby);
                     }
                     check_players_ready();
@@ -383,6 +428,35 @@ void red_btn_press(){
 
 // Load all settings 
 void load_settings(){
+
+    // General Settings
+    msg_intro = webinterface.load_setting("msg_intro");
+
+    color_intro = parse_color(webinterface.load_setting("color_intro"));
+
+    color_pre = parse_color(webinterface.load_setting("color_pre"));
+
+    color_timer = parse_color(webinterface.load_setting("color_timer"));
+
+    String show_aux_lights_string = webinterface.load_setting("show_aux_lights");
+    show_aux_lights = show_aux_lights_string == "trueselected" || show_aux_lights_string == "true";
+
+    String show_dim_lights_string = webinterface.load_setting("show_dim_lights");
+    if(show_dim_lights_string == "falseselected" || show_dim_lights_string == "false"){
+        blue_dim = 0x0000;
+        red_dim = 0x0000;
+        green_dim = 0x0000;
+    }
+    
+    String show_ready_string = webinterface.load_setting("show_ready");
+    show_ready = show_ready_string == "trueselected" || show_ready_string == "true";
+
+    msg_get_ready = webinterface.load_setting("msg_get_ready");
+
+    msg_game_over = webinterface.load_setting("msg_game_over");
+
+
+    // Advanced Settings
     String min_time_string = webinterface.load_setting("min_time");
     if(min_time_string == "0:15"){
         min_time = 15;
@@ -422,8 +496,25 @@ void load_settings(){
         interval_time = 15;
     }
 
-    three_players = (prefs.get("num_players") == "3");
+    String pre_time_string = webinterface.load_setting("pre_time");
+    if(pre_time_string == "Off") pre_time = 0;
+    else if(pre_time_string == "") pre_time = 5;
+    else pre_time = pre_time_string.substring(0,1).toInt();
 
+    String go_time_string = webinterface.load_setting("go_time");
+    if(go_time_string == "Off") go_time = 0;
+    else if(go_time_string == "") go_time = 2;
+    else go_time = go_time_string.substring(0,1).toInt();
+
+    String game_over_time_string = webinterface.load_setting("game_over_time");
+    if(game_over_time_string == "Off") game_over_time = 0;
+    else if(game_over_time_string == "") game_over_time = 5;
+    else game_over_time = game_over_time_string.substring(0,1).toInt();
+
+    String auto_reset_string = webinterface.load_setting("auto_reset");
+    auto_reset = auto_reset_string == "trueselected" || auto_reset_string == "true";
+
+    // Prefs File
     String total_time_string = (prefs.get("total_time"));
     if(total_time_string == ""){
         total_time = 90;
@@ -442,27 +533,7 @@ void load_settings(){
         if(brightness < 1) brightness = 1;
     }
 
-    String show_aux_lights_string = webinterface.load_setting("show_aux_lights");
-    show_aux_lights = show_aux_lights_string == "trueselected" || show_aux_lights_string == "true";
-    String show_ready_string = webinterface.load_setting("show_ready");
-    show_ready = show_ready_string == "trueselected" || show_ready_string == "true";
-    String show_dim_lights_string = webinterface.load_setting("show_dim_lights");
-    if(show_dim_lights_string == "falseselected" || show_dim_lights_string == "false"){
-        blue_dim = 0x0000;
-        red_dim = 0x0000;
-        green_dim = 0x0000;
-    }
-
-    String pre_time_string = webinterface.load_setting("pre_time");
-    if(pre_time_string == "Off") pre_time = 0;
-    else pre_time = pre_time_string.substring(0,1).toInt();
-
-    String go_time_string = webinterface.load_setting("go_time");
-    if(go_time_string == "Off") go_time = 0;
-    else go_time = go_time_string.substring(0,1).toInt();
-
-    color_timer = parse_color(webinterface.load_setting("color_timer"));
-    color_pre = parse_color(webinterface.load_setting("color_pre"));
+    three_players = (prefs.get("num_players") == "3");
 
 }
 
@@ -491,7 +562,7 @@ void wifi_loop(){
         }
     }
 
-    //Load local_URL and filter out prefix and suffix
+    // Load local_URL and filter out prefix and suffix
     String local_URL = webinterface.load_setting("local_URL");
     if(local_URL.endsWith(".local")) local_URL = local_URL.substring(0,local_URL.length()-6);
     if(local_URL.startsWith("http://")) local_URL = local_URL.substring(7);
@@ -501,20 +572,28 @@ void wifi_loop(){
 
     uint64_t button_pressed_time;
     bool button_pressed = false;
+    bool restart = false;
 
     while(true){
         MDNS.update();
         webinterface.handle();
         yield();
-
+        
         if(button_pressed){
             button_pressed = !digitalRead(PIN_BTN_BLACK);
             if(millis() >= button_pressed_time + 3000){
-                break;
+                restart = true;
+            }
+            if(millis() >= button_pressed_time + 10000){
+                SPIFFS.remove("/settings.txt");
+                ESP.restart();
             }
         }else if(!digitalRead(PIN_BTN_BLACK)){
             button_pressed = true;
             button_pressed_time = millis();
+            
+        }else if(digitalRead(PIN_BTN_BLACK)){
+            if(restart) break;
         }
     }
 }
@@ -560,10 +639,10 @@ void setup(){
     display_1.setBrightness(brightness * 10 + 10);
     display_2.setBrightness(brightness * 10);
 
-    if(webinterface.load_setting("msg_intro") == ""){
+    if(msg_intro == ""){
         num_players();
     }else{
-        msg_intro();
+        intro();
     }
     
 }   

@@ -51,6 +51,7 @@ uint16_t green_dim = 0x0300;
 #define PRE         2
 #define COUNTDOWN   3
 #define PAUSED      4
+#define GAME_OVER   5
 
 uint8_t state = STARTUP;
 
@@ -63,24 +64,32 @@ String text_string = "";
 // Current graphics on screen
 bool show_brightness = false;
 
-// Game prefs
-uint16_t total_time = 90;
-uint16_t min_time = 30;
-uint16_t max_time = 180;
-uint8_t interval_time = 15;
+// Game prefs - prefs file
+uint16_t total_time;
+uint8_t brightness;
+bool three_players;
+
+// Game prefs - settings file
+String msg_intro;
+uint16_t color_intro;
+uint16_t color_pre;
+uint16_t color_timer;
+bool show_aux_lights;
+bool show_ready;
+String msg_get_ready;
+String msg_game_over;
+
+uint16_t min_time;
+uint16_t max_time;
+uint8_t interval_time;
+uint8_t pre_time;
+uint8_t go_time;
+uint8_t game_over_time;
+bool auto_reset;
+
+// In-game prefs
 uint16_t time_remaining;
 
-// Global prefs
-uint8_t brightness = 2;
-bool show_aux_lights = true;
-bool show_ready = true;
-uint8_t pre_time = 5;
-uint8_t go_time = 2;
-uint16_t color_timer = RED;
-uint16_t color_pre = YELLOW;
-
-// Players
-bool three_players = false;
 bool blue_ready = false;
 bool red_ready = false;
 bool green_ready = false;

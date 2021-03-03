@@ -43,7 +43,19 @@
     "type":"bool",
     "name":"Show Player Ready Messages",
     "req":true,
-    "val":true}
+    "val":true},
+
+    {"id":"msg_get_ready",
+    "type":"text",
+    "name":"Pre-Start Message",
+    "req":true,
+    "val":"GET READY..."},
+
+    {"id":"msg_game_over",
+    "type":"text",
+    "name":"Game Over Message",
+    "req":true,
+    "val":"GAME OVER!"}
 
     ],
 
@@ -77,7 +89,7 @@
     "name":"Pre-Start Time",
     "req":true,
     "val":"5 Seconds",
-    "desc":"The amount of time that 'GET READY...' is scrolled on the screen before the pre-countdown to the start",
+    "desc":"The amount of time that the pre-start message is scrolled on the screen before the pre-countdown to the start",
     "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds","9 Seconds","10 Seconds"]},
 
     {"id":"go_time",
@@ -86,7 +98,22 @@
     "req":true,
     "val":"2 Seconds",
     "desc":"The amount of time that 'GO' is displayed on the screen once the timer starts",
-    "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds"]}
+    "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds"]},
+
+    {"id":"game_over_time",
+    "type":"multi",
+    "name":"Game Over Time",
+    "req":true,
+    "val":"5 Seconds",
+    "desc":"The amount of time that the game over message is scrolled on the screen after the game ends",
+    "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds","9 Seconds","10 Seconds"]},
+
+    {"id":"auto_reset",
+    "type":"bool",
+    "name":"Auto Reset",
+    "desc":"Reset the game automatically after the game over message",
+    "req":true,
+    "val":false}
 
     ],
     
