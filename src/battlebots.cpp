@@ -158,20 +158,17 @@ void game_over(){
     }
 }
 
-void resume(){
-    state = COUNTDOWN;
-    ready();
-}
-
 void pause(){
     state = PAUSED;
     soft_isr.remove();
+    time_remaining = time_remaining - go_time + 1;
+    if(time_remaining < 0) time_remaining = 0;
     text_dynamic("PAUSED", YELLOW);
 }
 
 void countdown_b(){
     text_static(format_time(time_remaining, false), color_timer);
-    if(time_remaining == 1) {
+    if(time_remaining <= 1) {
         soft_isr.set_timer(game_over,500);
     } else {
         soft_isr.set_timer(countdown_a,500);
@@ -185,20 +182,14 @@ void countdown_a(){
     soft_isr.set_timer(countdown_b,500);
 }
 
-void countdown_start(){
-    if(state == COUNTDOWN) time_remaining = total_time - go_time + 1;
-    else state = COUNTDOWN;
-    countdown_a();
-}
-
 // GO!
 void pre_countdown_go(){
-    if(state == PRE) state = COUNTDOWN;
+    state = COUNTDOWN;
     if(go_time > 0){
         text_static("GO!", GREEN);
-        soft_isr.set_timer(countdown_start,go_time*1000);
+        soft_isr.set_timer(countdown_a,go_time*1000);
     }else{
-        countdown_start();
+        countdown_a();
     }
 }
 
@@ -223,14 +214,20 @@ void pre_countdown_3(){
 }
 
 // Get ready message
-void ready(){
-    if(state == STANDBY) state = PRE;
+void pre_countdown_msg(){
+    state = PRE;
     if(pre_time > 0){
         text_dynamic(msg_get_ready,color_pre);
         soft_isr.set_timer(pre_countdown_3,pre_time*1000);
     }else{
         pre_countdown_3();
     }
+}
+
+// All players are ready, set the time
+void ready(){
+    time_remaining = total_time - go_time + 1;
+    pre_countdown_msg();
 }
 
 // Standby timer display
@@ -242,7 +239,6 @@ void standby(){
 // Num players message
 void num_players(){
     state = STANDBY;
-
     if(three_players) text_dynamic("3 PLAYERS", GREEN);
     else text_dynamic("2 PLAYERS", BLUE);
     soft_isr.set_trigger(standby);
@@ -259,6 +255,7 @@ void intro(){
 void check_players_ready(){
     if(three_players){
         if(blue_ready & green_ready & red_ready){
+            state = PRE;
             if(show_ready){
                 soft_isr.set_trigger(ready);
             }else{
@@ -267,6 +264,7 @@ void check_players_ready(){
         }
     }else{
         if(blue_ready & red_ready){
+            state = PRE;
             if(show_ready){
                 soft_isr.set_trigger(ready);
             }else{
@@ -304,7 +302,7 @@ void black_btn_press(){
                     break;
                 }
             }
-            resume();
+            pre_countdown_msg();
             break;
         
         case GAME_OVER:
@@ -404,6 +402,9 @@ void red_btn_press(){
                         three_players = true;
                         prefs.set("num_players", "3");
                     }
+                red_ready = false;
+                blue_ready = false;
+                green_ready = false;
                 num_players();
             }else{
                 if(red_ready){
@@ -438,18 +439,15 @@ void load_settings(){
 
     color_timer = parse_color(webinterface.load_setting("color_timer"));
 
-    String show_aux_lights_string = webinterface.load_setting("show_aux_lights");
-    show_aux_lights = show_aux_lights_string == "trueselected" || show_aux_lights_string == "true";
+    show_aux_lights = webinterface.load_setting("show_aux_lights") == "true";
 
-    String show_dim_lights_string = webinterface.load_setting("show_dim_lights");
-    if(show_dim_lights_string == "falseselected" || show_dim_lights_string == "false"){
+    if(webinterface.load_setting("show_dim_lights") == "false"){
         blue_dim = 0x0000;
         red_dim = 0x0000;
         green_dim = 0x0000;
     }
-    
-    String show_ready_string = webinterface.load_setting("show_ready");
-    show_ready = show_ready_string == "trueselected" || show_ready_string == "true";
+
+    show_ready = webinterface.load_setting("show_ready") == "true";
 
     msg_get_ready = webinterface.load_setting("msg_get_ready");
 
@@ -511,8 +509,8 @@ void load_settings(){
     else if(game_over_time_string == "") game_over_time = 5;
     else game_over_time = game_over_time_string.substring(0,1).toInt();
 
-    String auto_reset_string = webinterface.load_setting("auto_reset");
-    auto_reset = auto_reset_string == "trueselected" || auto_reset_string == "true";
+    auto_reset = webinterface.load_setting("auto_reset") == "true";
+
 
     // Prefs File
     String total_time_string = (prefs.get("total_time"));
@@ -663,8 +661,11 @@ void loop(){
     text_handle();
     if(!text_scroll){
         brightness_handle();
-        if(!show_brightness) players_handle();
+        
     }
+
+    if(!show_brightness && state != STARTUP) players_handle();
+
     display_1.show();
     display_2.show();
 

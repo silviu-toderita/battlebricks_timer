@@ -88,7 +88,7 @@ uint8_t game_over_time;
 bool auto_reset;
 
 // In-game prefs
-uint16_t time_remaining;
+int16_t time_remaining;
 
 bool blue_ready = false;
 bool red_ready = false;

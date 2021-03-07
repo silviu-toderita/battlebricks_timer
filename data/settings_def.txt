@@ -90,7 +90,7 @@
     "req":true,
     "val":"5 Seconds",
     "desc":"The amount of time that the pre-start message is scrolled on the screen before the pre-countdown to the start",
-    "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds","9 Seconds","10 Seconds"]},
+    "opt":["Off","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds"]},
 
     {"id":"go_time",
     "type":"multi",
@@ -106,7 +106,7 @@
     "req":true,
     "val":"5 Seconds",
     "desc":"The amount of time that the game over message is scrolled on the screen after the game ends",
-    "opt":["Off","1 Second","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds","9 Seconds","10 Seconds"]},
+    "opt":["Off","2 Seconds","3 Seconds","4 Seconds","5 Seconds","6 Seconds","7 Seconds","8 Seconds"]},
 
     {"id":"auto_reset",
     "type":"bool",
