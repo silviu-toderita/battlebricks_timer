@@ -1,24 +1,35 @@
 #include "battlebots.h"
+#include "graphics.h"
 
-// Matrix Display Objects
+// Matrix Displays
 Adafruit_NeoMatrix display_1 = Adafruit_NeoMatrix(16, 16, 2, 1, PIN_DISPLAY1, NEO_MATRIX_TOP + NEO_MATRIX_RIGHT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_GRB + NEO_KHZ800);
 Adafruit_NeoMatrix display_2 = Adafruit_NeoMatrix(8, 8, 2, 1, PIN_DISPLAY2, NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG + NEO_TILE_RIGHT + NEO_GRB + NEO_KHZ800);
 
-// Networking objects
+// Networking
 ESP8266WiFiMulti wifimulti;
 Web_Interface webinterface;
 
-// Interrupts Object
-Soft_ISR soft_isr;
+// Interrupts
+Soft_ISR display_isr;
+Soft_ISR buzzer_isr;
 
-// Object for transient preferences
+// In-game preferences
 Persistent_Storage prefs("pref");
 
-// Button objects
+// Buttons
 Button btn_black(PIN_BTN_BLACK, true);
 Button btn_blue(PIN_BTN_BLUE, true);
 Button btn_red(PIN_BTN_RED, true);
 Button btn_green(PIN_BTN_GREEN, true);
+
+void stop_beep() {
+    digitalWrite(PIN_BUZZER, LOW);
+}
+
+void beep(uint16_t time) {
+    digitalWrite(PIN_BUZZER, HIGH);
+    buzzer_isr.set_timer(stop_beep, time);
+}
 
 // Handle drawing players ready lights
 void players_handle(){
@@ -61,7 +72,7 @@ void text_handle(){
         int16_t text_length = text_string.length() * 8;
         if(text_xpos < -text_length){
             text_xpos = 32;
-            soft_isr.trigger();
+            display_isr.trigger();
             return;
         }
     }
@@ -133,7 +144,7 @@ void countdown_a();
 
 void reset(){
     state = STANDBY;
-    soft_isr.remove();
+    display_isr.remove();
     red_ready = false;
     blue_ready = false;
     green_ready = false;
@@ -152,7 +163,7 @@ void game_over(){
     state = GAME_OVER;
     if(game_over_time > 0) {
         text_dynamic(msg_game_over,RED);
-        soft_isr.set_timer(post_game_over,game_over_time*1000);
+        display_isr.set_timer(post_game_over,game_over_time*1000);
     }else{
         post_game_over();
     }
@@ -160,7 +171,7 @@ void game_over(){
 
 void pause(){
     state = PAUSED;
-    soft_isr.remove();
+    display_isr.remove();
     time_remaining = time_remaining - go_time + 1;
     if(time_remaining < 0) time_remaining = 0;
     text_dynamic("PAUSED", YELLOW);
@@ -169,9 +180,9 @@ void pause(){
 void countdown_b(){
     text_static(format_time(time_remaining, false), color_timer);
     if(time_remaining <= 1) {
-        soft_isr.set_timer(game_over,500);
+        display_isr.set_timer(game_over,500);
     } else {
-        soft_isr.set_timer(countdown_a,500);
+        display_isr.set_timer(countdown_a,500);
     }
     
 }
@@ -179,7 +190,7 @@ void countdown_b(){
 void countdown_a(){
     time_remaining--;
     text_static(format_time(time_remaining, true), color_timer);
-    soft_isr.set_timer(countdown_b,500);
+    display_isr.set_timer(countdown_b,500);
 }
 
 // GO!
@@ -187,7 +198,7 @@ void pre_countdown_go(){
     state = COUNTDOWN;
     if(go_time > 0){
         text_static("GO!", GREEN);
-        soft_isr.set_timer(countdown_a,go_time*1000);
+        display_isr.set_timer(countdown_a,go_time*1000);
     }else{
         countdown_a();
     }
@@ -196,21 +207,21 @@ void pre_countdown_go(){
 // 1...
 void pre_countdown_1(){
     text_static("1",color_pre);
-    soft_isr.set_timer(pre_countdown_go,1000);
+    display_isr.set_timer(pre_countdown_go,1000);
 
 }
 
 // 2...
 void pre_countdown_2(){
     text_static("2",color_pre);
-    soft_isr.set_timer(pre_countdown_1,1000);
+    display_isr.set_timer(pre_countdown_1,1000);
 
 }
 
 // 3...
 void pre_countdown_3(){
     text_static("3",color_pre);
-    soft_isr.set_timer(pre_countdown_2,1000);
+    display_isr.set_timer(pre_countdown_2,1000);
 }
 
 // Get ready message
@@ -218,7 +229,7 @@ void pre_countdown_msg(){
     state = PRE;
     if(pre_time > 0){
         text_dynamic(msg_get_ready,color_pre);
-        soft_isr.set_timer(pre_countdown_3,pre_time*1000);
+        display_isr.set_timer(pre_countdown_3,pre_time*1000);
     }else{
         pre_countdown_3();
     }
@@ -241,14 +252,14 @@ void num_players(){
     state = STANDBY;
     if(three_players) text_dynamic("3 PLAYERS", GREEN);
     else text_dynamic("2 PLAYERS", BLUE);
-    soft_isr.set_trigger(standby);
+    display_isr.set_trigger(standby);
     
 }
 
 // Intro message
 void intro(){
     text_dynamic(msg_intro, color_intro);
-    soft_isr.set_trigger(num_players);
+    display_isr.set_trigger(num_players);
 }
 
 // Check if enough players are ready to start the game
@@ -257,7 +268,7 @@ void check_players_ready(){
         if(blue_ready & green_ready & red_ready){
             state = PRE;
             if(show_ready){
-                soft_isr.set_trigger(ready);
+                display_isr.set_trigger(ready);
             }else{
                 ready();
             }
@@ -266,7 +277,7 @@ void check_players_ready(){
         if(blue_ready & red_ready){
             state = PRE;
             if(show_ready){
-                soft_isr.set_trigger(ready);
+                display_isr.set_trigger(ready);
             }else{
                 ready();
             }
@@ -336,7 +347,7 @@ void green_btn_press(){
                     players_handle();
                     if(show_ready){
                         text_dynamic("GREEN READY", GREEN);
-                        soft_isr.set_trigger(standby);
+                        display_isr.set_trigger(standby);
                     }
                     check_players_ready();
                 }
@@ -365,7 +376,7 @@ void blue_btn_press(){
                 prefs.set("brightness",String(brightness));
                 text_static(String(brightness),WHITE,20);
                 show_brightness = true;
-                soft_isr.set_timer(standby,1000);
+                display_isr.set_timer(standby,1000);
             }else{
                 if(blue_ready){
                     blue_ready = false;
@@ -375,7 +386,7 @@ void blue_btn_press(){
                     players_handle();
                     if(show_ready){
                         text_dynamic("BLUE READY", BLUE);
-                        soft_isr.set_trigger(standby);
+                        display_isr.set_trigger(standby);
                     }
                     check_players_ready();
                 }
@@ -394,6 +405,7 @@ void red_btn_press(){
 
         case STANDBY:
             if(btn_black.get()){
+
                 if(three_players){
                         three_players = false;
                         green_ready = false;
@@ -415,7 +427,7 @@ void red_btn_press(){
                     players_handle();
                     if(show_ready){
                         text_dynamic("RED READY", RED);
-                        soft_isr.set_trigger(standby);
+                        display_isr.set_trigger(standby);
                     }
                     check_players_ready();
                 }
@@ -537,6 +549,7 @@ void load_settings(){
 
 // Wi-Fi Loop for settings update
 void wifi_loop(){
+    // Display a static wifi symbol on the displays
     display_1.clear();
     display_2.clear();
     display_1.setBrightness(32);
@@ -546,8 +559,9 @@ void wifi_loop(){
     display_1.show();
     display_2.show();
 
+    // Start a hotspot
     WiFi.mode(WIFI_AP);
-
+    WiFi.softAPConfig(IPAddress(1,2,3,4),IPAddress(192,168,4,1),IPAddress(255,255,255,0));
     String SSID = webinterface.load_setting("hotspot_SSID");
     if(SSID == ""){
         WiFi.softAP("battlebots","12345678");
@@ -560,28 +574,22 @@ void wifi_loop(){
         }
     }
 
-    // Load local_URL and filter out prefix and suffix
-    String local_URL = webinterface.load_setting("local_URL");
-    if(local_URL.endsWith(".local")) local_URL = local_URL.substring(0,local_URL.length()-6);
-    if(local_URL.startsWith("http://")) local_URL = local_URL.substring(7);
-    if(local_URL.startsWith("https://")) local_URL = local_URL.substring(8);
-    if(local_URL == "") local_URL = "battlebots";
-    MDNS.begin(local_URL);
-
+    // Wifi Loop
     uint64_t button_pressed_time;
     bool button_pressed = false;
     bool restart = false;
 
     while(true){
-        MDNS.update();
         webinterface.handle();
         yield();
         
         if(button_pressed){
             button_pressed = !digitalRead(PIN_BTN_BLACK);
+            // If black button is pressed for 3 seconds and let go, restart
             if(millis() >= button_pressed_time + 3000){
                 restart = true;
             }
+            // If black button is pressed for 10 seconds, factory reset
             if(millis() >= button_pressed_time + 10000){
                 SPIFFS.remove("/settings.txt");
                 ESP.restart();
@@ -589,7 +597,6 @@ void wifi_loop(){
         }else if(!digitalRead(PIN_BTN_BLACK)){
             button_pressed = true;
             button_pressed_time = millis();
-            
         }else if(digitalRead(PIN_BTN_BLACK)){
             if(restart) break;
         }
@@ -600,10 +607,6 @@ void wifi_loop(){
 //   SETUP
 // #############################################################################
 void setup(){
-    // Serial Monitor
-    Serial.begin(115200);
-    Serial.println("");
-    
     // Initialize GPIO
     pinMode(PIN_LED_RED, OUTPUT);
     pinMode(PIN_LED_BLUE, OUTPUT);
@@ -624,19 +627,25 @@ void setup(){
     display_1.begin();
     display_2.begin();
 
+    // Initialize web interface
     webinterface.begin();
 
+    // If black button held during start up, go to the wifi_loop
     if(!digitalRead(PIN_BTN_BLACK)){
         wifi_loop();
     }
 
+    // Disable wifi and load settings
     WiFi.mode(WIFI_OFF);
-
     load_settings();
 
+    // Set display brightness
     display_1.setBrightness(brightness * 10 + 10);
     display_2.setBrightness(brightness * 10);
 
+    beep(500);
+    
+    // Begin the intro sequence
     if(msg_intro == ""){
         num_players();
     }else{
@@ -649,23 +658,31 @@ void setup(){
 //   LOOP
 // #############################################################################
 void loop(){
-    soft_isr.handle();
+    // Handle any time-based interrupts
+    display_isr.handle();
+    buzzer_isr.handle();
 
+    // Handle all button inputs
     btn_black.handle();
     btn_blue.handle();
     btn_red.handle();
     btn_green.handle();
 
+    // Clear Displays
     display_1.clear();
     display_2.clear();
+
+    // Draw text
     text_handle();
     if(!text_scroll){
         brightness_handle();
         
     }
 
+    // Draw player ready bars
     if(!show_brightness && state != STARTUP) players_handle();
 
+    // Refresh display
     display_1.show();
     display_2.show();
 

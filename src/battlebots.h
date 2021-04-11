@@ -14,22 +14,26 @@
 // Networking Libraries
 #include "ESP8266WiFi.h"
 #include "ESP8266WiFiMulti.h"
-#include "ESP8266mDNS.h"
 #include "Web_Interface.h"
 
+// Sound Library
+#include "AudioFileSourceSPIFFS.h"
+#include "AudioGeneratorWAV.h"
+#include "AudioOutputI2S.h"
+
 // Pin Definitions
-#define PIN_DISPLAY1 2
-#define PIN_DISPLAY2 10
+#define PIN_DISPLAY1    2
+#define PIN_DISPLAY2    10
 
-#define PIN_LED_RED 13
-#define PIN_LED_BLUE 12
+#define PIN_LED_RED     13
+#define PIN_LED_BLUE    12
 
-#define PIN_BUZZER 15
+#define PIN_BTN_RED     14
+#define PIN_BTN_BLACK   5
+#define PIN_BTN_BLUE    4
+#define PIN_BTN_GREEN   0
 
-#define PIN_BTN_RED 14
-#define PIN_BTN_BLACK 5
-#define PIN_BTN_BLUE 4
-#define PIN_BTN_GREEN 0
+#define PIN_BUZZER      15
 
 // Color Definitions
 #define BLACK       0x0000
@@ -94,16 +98,3 @@ bool blue_ready = false;
 bool red_ready = false;
 bool green_ready = false;
 
-// Graphics
-const PROGMEM uint8_t bmp_wifi_l[] = {  0x0F, 0xF0, 0x3F, 0xFC, 0x30, 0x0C, 0x03, 0xC0, 
-                                        0x0F, 0xF0, 0x0C, 0x30, 0x00, 0x00, 0x03, 0xC0, 
-                                        0x03, 0xC0}; 
-
-const PROGMEM uint8_t bmp_wifi_s[] = {  0x3C, 0xFF, 0xC3, 0x18, 0x7E, 0x66, 0x18, 0x18}; 
-
-const PROGMEM uint8_t bmp_brightness_l[] = {0x01, 0x00, 0x21, 0x08, 0x10, 0x10, 0x03, 0x80, 
-                                            0x04, 0x40, 0x08, 0x20, 0x68, 0x2C, 0x08, 0x20, 
-                                            0x04, 0x40, 0x03, 0x80, 0x10, 0x10, 0x21, 0x08,
-                                            0x01, 0x00}; 
-
-const PROGMEM uint8_t bmp_brightness_s[] = {0x99, 0x5A, 0x3C, 0xE7, 0xE7, 0x3C, 0x5A, 0x99}; 
