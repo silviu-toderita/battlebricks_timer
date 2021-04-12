@@ -4,7 +4,19 @@
     "name":"Startup Message",
     "desc":"Leave this blank to skip startup message",
     "req":false,
-    "val":"LEGO BATTLEBOTS"},
+    "val":"BATTLEBRICKS"},
+
+    {"id":"msg_get_ready",
+    "type":"text",
+    "name":"Get Ready Message",
+    "req":true,
+    "val":"GET READY..."},
+
+    {"id":"msg_game_over",
+    "type":"text",
+    "name":"Game Over Message",
+    "req":true,
+    "val":"GAME OVER!"},
 
     {"id":"color_intro",
     "type":"multi",
@@ -15,7 +27,7 @@
 
     {"id":"color_pre",
     "type":"multi",
-    "name":"Pre-Countdown Message Color",
+    "name":"Get Ready Message Color",
     "req":true,
     "val":"Yellow", 
     "opt":["Blue","Red", "Green","Cyan", "Magenta","Yellow","White"]},
@@ -45,42 +57,36 @@
     "req":true,
     "val":true},
 
-    {"id":"msg_get_ready",
-    "type":"text",
-    "name":"Pre-Start Message",
+    {"id":"buzzer_on",
+    "type":"bool",
+    "name":"Buzzer",
     "req":true,
-    "val":"GET READY..."},
-
-    {"id":"msg_game_over",
-    "type":"text",
-    "name":"Game Over Message",
-    "req":true,
-    "val":"GAME OVER!"}
+    "val":true}
 
     ],
 
 "advanced":[
     {"id":"min_time",
     "type":"multi",
-    "name":"Minimum Countdown Settings Time",
+    "name":"Minimum Countdown Time",
     "req":true,
-    "desc":"Minimum value for countdown timer when changing settings during gameplay",
+    "desc":"Minimum value for countdown timer",
     "val":"0:30", 
     "opt":["0:15","0:30", "0:45","1:00", "1:30"]},
 
     {"id":"max_time",
     "type":"multi",
-    "name":"Maximum Countdown Settings Time",
+    "name":"Maximum Countdown Time",
     "req":true,
-    "desc":"Maximum value for countdown timer when changing settings during gameplay",
+    "desc":"Maximum value for countdown timer",
     "val":"3:00", 
     "opt":["2:00","3:00", "4:00","5:00"]},
 
     {"id":"interval_time",
     "type":"multi",
-    "name":"Countdown Settings Interval Time",
+    "name":"Countdown Interval Time",
     "req":true,
-    "desc":"Value that countdown timer will increase when changing settings during gameplay",
+    "desc":"Time changes by this interval for countdown timer",
     "val":"0:15", 
     "opt":["0:01", "0:05", "0:15", "0:30"]},
 
@@ -94,7 +100,7 @@
 
     {"id":"go_time",
     "type":"multi",
-    "name":"'Go' Time",
+    "name":"'GO' Display Time",
     "req":true,
     "val":"2 Seconds",
     "desc":"The amount of time that 'GO' is displayed on the screen once the timer starts",
@@ -102,7 +108,7 @@
 
     {"id":"game_over_time",
     "type":"multi",
-    "name":"Game Over Time",
+    "name":"'Game Over' Time",
     "req":true,
     "val":"5 Seconds",
     "desc":"The amount of time that the game over message is scrolled on the screen after the game ends",
@@ -122,19 +128,13 @@
     "type":"text",
     "name":"Hotspot Name",
     "req":true,
-    "val":"battlebots"},
+    "val":"battlebricks"},
 
     {"id":"hotspot_password",
     "type":"text",
     "name":"Hotspot Password",
     "req":false,
-    "val":"12345678"},
+    "val":"12345678"}
 
-    {"id":"local_URL",
-    "type":"text",
-    "name":"Local Address",
-    "desc":"Address for Web Interface. Must end in .local",
-    "val":"battlebots.local",
-    "req":true}
     ]
 }
