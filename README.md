@@ -10,7 +10,10 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 - Built-in buzzer for audio feedback
 
 ## Progress
-As of Apr 2021, the firmware is complete and has been tested on a prototype with all hardware components. The next step will be building a case for the timer out of clear acrylic sheets and lego so that it can be used in Battlebricks competitions this summer. Here are some shots of the prototype:
+As of Apr 2021, the firmware is complete and has been tested on a prototype with all hardware components. Below are some pictures of the prototype. Still to do:
+- Build a case from clear acrylic sheets and LEGO to display and protect the Battlebricks Timer during competitions
+- Finish and publish a parts list and schematic
+- Create a setup guide so you can build your own Battlebricks Timer
 
 <img src="https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/proto_1.JPG" width="500"><img src="https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/proto_2.JPG" width="500">
 
