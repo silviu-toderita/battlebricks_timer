@@ -20,34 +20,8 @@ Button btn_green(PIN_BTN_GREEN, true);
 // LED Matrix Displays
 Graphics graphics;
 
-void stop_beep() {
-    digitalWrite(PIN_BUZZER, LOW);
-}
-
-void beep(uint16_t time) {
-    if(buzzer_on) {
-        digitalWrite(PIN_BUZZER, HIGH);
-        buzzer_isr.set_timer(stop_beep, time);
-    }
-}
-
-void short_beep() {
-    if(buzzer_on) {
-        digitalWrite(PIN_BUZZER, HIGH);
-        buzzer_isr.set_timer(stop_beep, 100);
-    }
-    
-}
-
-void pause_beep() {
-    digitalWrite(PIN_BUZZER, LOW);
-    buzzer_isr.set_timer(short_beep, 100);
-}
-
-void double_beep() {
-    digitalWrite(PIN_BUZZER, HIGH);
-    buzzer_isr.set_timer(pause_beep, 100);
-}
+// Buzzer
+Buzzer buzzer(PIN_BUZZER, true);
 
 // Format time correctly for a timer
 String format_time(uint8_t time, bool colon){
@@ -85,11 +59,11 @@ void post_game_over(){
 void game_over(){
     state = GAME_OVER;
     if(game_over_time > 0) {
-        beep(game_over_time*1000);
+        buzzer.beep(game_over_time*1000);
         graphics.text_dynamic(msg_game_over,"Red");
         state_isr.set_timer(post_game_over,game_over_time*1000);
     }else{
-        beep(2000);
+        buzzer.beep(2000);
         post_game_over();
     }
 }
@@ -122,18 +96,18 @@ void countdown_a(){
 void pre_countdown_go(){
     state = COUNTDOWN;
     if(go_time > 0){
-        beep(go_time*1000);
+        buzzer.beep(go_time*1000);
         graphics.text_static("GO!", "Green");
         state_isr.set_timer(countdown_a,go_time*1000);
     }else{
-        beep(1000);
+        buzzer.beep(1000);
         countdown_a();
     }
 }
 
 // 1...
 void pre_countdown_1(){
-    beep(250);
+    buzzer.beep(250);
     graphics.text_static("1",color_pre);
     state_isr.set_timer(pre_countdown_go,1000);
 
@@ -141,7 +115,7 @@ void pre_countdown_1(){
 
 // 2...
 void pre_countdown_2(){
-    beep(250);
+    buzzer.beep(250);
     graphics.text_static("2",color_pre);
     state_isr.set_timer(pre_countdown_1,1000);
 
@@ -149,7 +123,7 @@ void pre_countdown_2(){
 
 // 3...
 void pre_countdown_3(){
-    beep(250);
+    buzzer.beep(250);
     graphics.text_static("3",color_pre);
     state_isr.set_timer(pre_countdown_2,1000);
 }
@@ -213,7 +187,7 @@ void black_btn_press(){
     uint32_t start_time = millis();
     switch(state){
         case STARTUP:
-            short_beep();
+            buzzer.beep_short();
             num_players();
             break;
 
@@ -222,22 +196,22 @@ void black_btn_press(){
             break;
         
         case PRE:
-            beep(1000);
+            buzzer.beep(1000);
             reset();
             break;
 
         case COUNTDOWN:
-            beep(1000);
+            buzzer.beep(1000);
             pause();
             break;
 
         case PAUSED:
-            short_beep();
+            buzzer.beep_short();
             pre_countdown_msg();
             break;
         
         case GAME_OVER:
-            beep(500);
+            buzzer.beep(500);
             reset();
             break;
 
@@ -252,7 +226,7 @@ void green_btn_press(){
 
         case STANDBY:
             if(btn_black.get()){
-                short_beep();
+                buzzer.beep_short();
                 if(total_time + interval_time > max_time){
                     total_time = min_time;
                 }else{
@@ -261,7 +235,7 @@ void green_btn_press(){
                 prefs.set("total_time", String(total_time));
                 standby();
             }else if(three_players){
-                double_beep();
+                buzzer.beep_double();
                 if(green_ready){
                     green_ready = false;
                     graphics.set_green_ready(false);
@@ -289,10 +263,10 @@ void blue_btn_press(){
 
         case STANDBY:
             if(btn_black.get()){
-                short_beep();
+                buzzer.beep_short();
                 prefs.set("brightness",String(graphics.change_brightness()));
             }else{
-                double_beep();
+                buzzer.beep_double();
                 if(blue_ready){
                     blue_ready = false;
                     graphics.set_blue_ready(false);
@@ -320,7 +294,7 @@ void red_btn_press(){
 
         case STANDBY:
             if(btn_black.get()){
-                short_beep();
+                buzzer.beep_short();
                 if(three_players){
                         three_players = false;
                         green_ready = false;
@@ -335,7 +309,7 @@ void red_btn_press(){
                 graphics.set_three_players(three_players);
                 num_players();
             }else{
-                double_beep();
+                buzzer.beep_double();
                 if(red_ready){
                     red_ready = false;
                     graphics.set_red_ready(false);
@@ -427,7 +401,7 @@ void load_settings(){
     else game_over_time = game_over_time_string.substring(0,1).toInt();
 
     auto_reset = webinterface.load_setting("auto_reset") == "true";
-    buzzer_on = webinterface.load_setting("buzzer_on") != "false";
+    buzzer.set_buzzer_on(webinterface.load_setting("buzzer_on") != "false");
 
 
     // Prefs File
@@ -499,16 +473,6 @@ void wifi_loop(){
 //   SETUP
 // #############################################################################
 void setup(){
-    // Initialize GPIO
-    pinMode(PIN_LED_RED, OUTPUT);
-    pinMode(PIN_LED_BLUE, OUTPUT);
-    pinMode(PIN_BUZZER, OUTPUT);
-
-    digitalWrite(PIN_LED_BLUE, LOW);
-    digitalWrite(PIN_LED_RED, LOW);
-    digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(PIN_BUZZER, LOW);
-
     // Set button callbacks
     btn_black.set_posedge_cb(black_btn_press);
     btn_blue.set_posedge_cb(blue_btn_press);
@@ -531,7 +495,7 @@ void setup(){
     load_settings();
 
     // Startup beep
-    beep(500);
+    buzzer.beep(500);
     
     // Intro sequence
     if(msg_intro == ""){
@@ -558,4 +522,7 @@ void loop(){
 
     // Handle LED displays
     graphics.handle();
+
+    // Handle buzzer
+    buzzer.handle();
 }

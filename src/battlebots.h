@@ -1,6 +1,7 @@
 #include "Arduino.h"
 
 #include "graphics.h"
+#include "buzzer.h"
 
 // Silviu's Libraries
 #include "Persistent_Storage.h"

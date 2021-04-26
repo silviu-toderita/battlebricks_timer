@@ -32,25 +32,25 @@ typedef void (*void_function_pointer)();
 class Graphics{
     public:
 
-    void begin();
-    void handle();
+        void begin();
+        void handle();
 
-    void text_static(String,String);
-    void text_dynamic(String,String);
-    void text_dynamic(String,String,void_function_pointer);
+        void text_static(String,String);
+        void text_dynamic(String,String);
+        void text_dynamic(String,String,void_function_pointer);
 
-    void set_brightness(String);
-    uint8_t change_brightness();
-    void show_wifi();
+        void set_brightness(String);
+        uint8_t change_brightness();
+        void show_wifi();
 
-    void set_red_ready(bool);
-    void set_blue_ready(bool);
-    void set_green_ready(bool);
-    void set_show_player_bar();
+        void set_red_ready(bool);
+        void set_blue_ready(bool);
+        void set_green_ready(bool);
+        void set_show_player_bar();
 
-    void set_three_players(bool);
-    void set_show_aux_lights(bool);
-    void set_show_dim_lights(bool);
+        void set_three_players(bool);
+        void set_show_aux_lights(bool);
+        void set_show_dim_lights(bool);
     
     private:
     // Matrix Displays
