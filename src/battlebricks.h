@@ -3,11 +3,8 @@
 #include "graphics.h"
 #include "buzzer.h"
 
-// Silviu's Libraries
 #include "Persistent_Storage.h"
 #include "Button.h"
-
-// Networking Libraries
 #include "ESP8266WiFi.h"
 #include "ESP8266WiFiMulti.h"
 #include "Web_Interface.h"
@@ -29,11 +26,11 @@
 
 uint8_t state = STARTUP;
 
-// Game prefs - prefs file
+// In-game settings
 uint16_t total_time;
 bool three_players;
 
-// Game prefs - settings file
+// Settings from settings file
 String msg_intro;
 String color_intro;
 String color_pre;
@@ -51,7 +48,7 @@ uint8_t go_time;
 uint8_t game_over_time;
 bool auto_reset;
 
-// In-game attributes
+// Game Status
 int16_t time_remaining;
 bool blue_ready = false;
 bool red_ready = false;

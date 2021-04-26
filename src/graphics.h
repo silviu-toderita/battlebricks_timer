@@ -1,6 +1,7 @@
 #include "Arduino.h"
 
 #include "Soft_ISR.h"
+
 // Graphics Libraries 
 #include "Adafruit_GFX.h"
 #include "Adafruit_NeoPixel.h"
@@ -31,7 +32,6 @@ typedef void (*void_function_pointer)();
 
 class Graphics{
     public:
-
         void begin();
         void handle();
 
@@ -53,7 +53,7 @@ class Graphics{
         void set_show_dim_lights(bool);
     
     private:
-    // Matrix Displays
+        // Matrix Displays
         Adafruit_NeoMatrix display_1 = Adafruit_NeoMatrix(16, 16, 2, 1, PIN_DISPLAY1, 
             NEO_MATRIX_TOP + NEO_MATRIX_RIGHT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_GRB + NEO_KHZ800);
         Adafruit_NeoMatrix display_2 = Adafruit_NeoMatrix(8, 8, 2, 1, PIN_DISPLAY2, 
@@ -68,12 +68,10 @@ class Graphics{
         String text_string = "";
 
         // Current graphics on screen
-        bool show_player_bar = false;
-
+        bool show_player_bar;
         bool show_aux_lights;
         bool show_dim_lights;
         bool three_players;
-
         bool red_ready;
         bool blue_ready;
         bool green_ready;

@@ -2,6 +2,7 @@
 
 typedef void (*void_function_pointer)();
 
+// Time to wait for button input to settle
 #define DEBOUNCE_TIME 50
 
 class Button{

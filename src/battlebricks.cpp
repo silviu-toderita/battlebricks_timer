@@ -1,4 +1,20 @@
-#include "battlebots.h"
+/**
+ * BATTLEBRICKS TIMER
+ * 
+ * Battlebricks Timer is an ESP8266-based countdown timer for "Battlebricks" (Lego Battlebots) 
+ * competitions. 
+ * 
+ * Features: 
+ *  -Audience-facing 32x16 LED matrix display (WS2812)
+ *  -Player-facing 16x8 LED matrix display (WS2812)
+ *  -Player ready lights for 2 players
+ *  -Auxiliary player ready lights on LED displays supports up to 3 players
+ *  -Buzzer for audio feedback
+ *  -Wi-Fi and web settings page for full customization of all parameters
+ *  -In-game settings can be adjusted on the fly (total time, number of players, screen brightness)
+ * 
+ **/
+#include "battlebricks.h"
 
 // Networking
 ESP8266WiFiMulti wifimulti;
@@ -8,8 +24,8 @@ Web_Interface webinterface;
 Soft_ISR state_isr;
 Soft_ISR buzzer_isr;
 
-// In-game preferences
-Persistent_Storage prefs("pref");
+// In-game settings
+Persistent_Storage ingame_settings("pref");
 
 // Buttons
 Button btn_black(PIN_BTN_BLACK, true);
@@ -23,7 +39,13 @@ Graphics graphics;
 // Buzzer
 Buzzer buzzer(PIN_BUZZER, true);
 
-// Format time correctly for a timer
+
+/**
+ * Format Time
+ * @param time in seconds
+ * @param colon display
+ * @return time formatted for digital clock
+ **/
 String format_time(uint8_t time, bool colon){
     String minute = String(time / 60);
     String second = String(time % 60);
@@ -32,10 +54,15 @@ String format_time(uint8_t time, bool colon){
     return minute + " " + second;
 }
 
+/**
+ * TIMER SEQUENCE
+ *  V V V V V V V
+ **/
 void ready();
 void standby();
 void countdown_a();
 
+// Reset state
 void reset(){
     state = STANDBY;
     state_isr.remove();
@@ -48,6 +75,7 @@ void reset(){
     standby();
 }
 
+// Display 0:00 post-game-over
 void post_game_over(){
     if(auto_reset) {
         reset();
@@ -56,6 +84,7 @@ void post_game_over(){
     }
 }
 
+// Display game over message
 void game_over(){
     state = GAME_OVER;
     if(game_over_time > 0) {
@@ -68,6 +97,7 @@ void game_over(){
     }
 }
 
+// Display paused message
 void pause(){
     state = PAUSED;
     state_isr.remove();
@@ -76,6 +106,7 @@ void pause(){
     graphics.text_dynamic("PAUSED", "Yellow");
 }
 
+// Display time remaining without colon and decrement time by 1 second
 void countdown_b(){
     graphics.text_static(format_time(time_remaining, false), color_timer);
     if(time_remaining <= 1) {
@@ -86,13 +117,14 @@ void countdown_b(){
     
 }
 
+// Display time remaining with colon
 void countdown_a(){
     time_remaining--;
     graphics.text_static(format_time(time_remaining, true), color_timer);
     state_isr.set_timer(countdown_b,500);
 }
 
-// GO!
+// Display go message
 void pre_countdown_go(){
     state = COUNTDOWN;
     if(go_time > 0){
@@ -105,7 +137,7 @@ void pre_countdown_go(){
     }
 }
 
-// 1...
+// Display 1
 void pre_countdown_1(){
     buzzer.beep(250);
     graphics.text_static("1",color_pre);
@@ -113,7 +145,7 @@ void pre_countdown_1(){
 
 }
 
-// 2...
+// Display 2
 void pre_countdown_2(){
     buzzer.beep(250);
     graphics.text_static("2",color_pre);
@@ -121,14 +153,14 @@ void pre_countdown_2(){
 
 }
 
-// 3...
+// Display 3
 void pre_countdown_3(){
     buzzer.beep(250);
     graphics.text_static("3",color_pre);
     state_isr.set_timer(pre_countdown_2,1000);
 }
 
-// Get ready message
+// Display get ready message
 void pre_countdown_msg(){
     state = PRE;
     if(pre_time > 0){
@@ -139,31 +171,38 @@ void pre_countdown_msg(){
     }
 }
 
-// All players are ready, set the time
+// Set the time
 void ready(){
     time_remaining = total_time - go_time + 1;
     pre_countdown_msg();
 }
 
-// Standby timer display
+// Display static clock
 void standby(){
     graphics.text_static(format_time(total_time, true), color_timer);
     graphics.set_show_player_bar();
 }
 
-// Num players message
+// Display number of players
 void num_players(){
     state = STANDBY;
     if(three_players) graphics.text_dynamic("3 PLAYERS", "Green", standby);
     else graphics.text_dynamic("2 PLAYERS", "Blue", standby);
 }
 
-// Intro message
+// Display intro message
 void intro(){
     graphics.text_dynamic(msg_intro, color_intro, num_players);
 }
+/**
+ *  ^ ^ ^ ^ ^ ^ ^ 
+ * TIMER SEQUENCE
+ **/
 
-// Check if enough players are ready to start the game
+
+/**
+ * Check if enough players are ready, and start the game
+ **/
 void check_players_ready(){
     if(three_players){
         if(blue_ready & green_ready & red_ready){
@@ -182,34 +221,36 @@ void check_players_ready(){
     }
 }
 
-// Handler for black button press
+/**
+ * Handles black button press
+ **/
 void black_btn_press(){
     uint32_t start_time = millis();
     switch(state){
+        // Skip ahead during startup
         case STARTUP:
             buzzer.beep_short();
             num_players();
             break;
-
         case STANDBY:
             standby();
             break;
-        
+        // Reset game during pre-countdown
         case PRE:
             buzzer.beep(1000);
             reset();
             break;
-
+        // Pause game
         case COUNTDOWN:
             buzzer.beep(1000);
             pause();
             break;
-
+        // Resume game
         case PAUSED:
             buzzer.beep_short();
             pre_countdown_msg();
             break;
-        
+        // Reset game after game over
         case GAME_OVER:
             buzzer.beep(500);
             reset();
@@ -219,22 +260,14 @@ void black_btn_press(){
     }
 }
 
-// Handler for green button press
+/**
+ * Handles green button press (only active during STANDBY state)
+ **/
 void green_btn_press(){
     switch(state){
-        case STARTUP: break;
-
         case STANDBY:
-            if(btn_black.get()){
-                buzzer.beep_short();
-                if(total_time + interval_time > max_time){
-                    total_time = min_time;
-                }else{
-                    total_time = total_time + interval_time;
-                }
-                prefs.set("total_time", String(total_time));
-                standby();
-            }else if(three_players){
+            // Set red player ready / not ready
+            if(!btn_black.get()){
                 buzzer.beep_double();
                 if(green_ready){
                     green_ready = false;
@@ -248,6 +281,16 @@ void green_btn_press(){
                         check_players_ready();
                     }
                 }
+            // If black button being pressed, alt function is change time
+            }else if(three_players){
+                buzzer.beep_short();
+                if(total_time + interval_time > max_time){
+                    total_time = min_time;
+                }else{
+                    total_time = total_time + interval_time;
+                }
+                ingame_settings.set("total_time", String(total_time));
+                standby();
             }
             break;
         
@@ -256,16 +299,14 @@ void green_btn_press(){
     }
 }
 
-// Handler for blue button press
+/**
+ * Handles blue button press (only active during STANDBY state)
+ **/
 void blue_btn_press(){
     switch(state){
-        case STARTUP: break;
-
         case STANDBY:
-            if(btn_black.get()){
-                buzzer.beep_short();
-                prefs.set("brightness",String(graphics.change_brightness()));
-            }else{
+            // Set blue player ready / not ready
+            if(!btn_black.get()){
                 buzzer.beep_double();
                 if(blue_ready){
                     blue_ready = false;
@@ -279,6 +320,10 @@ void blue_btn_press(){
                         check_players_ready();
                     }
                 }
+            // If black button being pressed, alt function is change brightness
+            }else{
+                buzzer.beep_short();
+                ingame_settings.set("brightness",String(graphics.change_brightness()));
             }
             break;
         
@@ -287,28 +332,14 @@ void blue_btn_press(){
     }
 }
 
-// Handler for red button press
+/**
+ * Handles red button press (only active during STANDBY state)
+ **/
 void red_btn_press(){
     switch(state){
-        case STARTUP: break;
-
         case STANDBY:
-            if(btn_black.get()){
-                buzzer.beep_short();
-                if(three_players){
-                        three_players = false;
-                        green_ready = false;
-                        prefs.set("num_players", "2");
-                    }else{
-                        three_players = true;
-                        prefs.set("num_players", "3");
-                    }
-                red_ready = false;
-                blue_ready = false;
-                green_ready = false;
-                graphics.set_three_players(three_players);
-                num_players();
-            }else{
+            // Set red player ready / not ready
+            if(!btn_black.get()){
                 buzzer.beep_double();
                 if(red_ready){
                     red_ready = false;
@@ -322,6 +353,22 @@ void red_btn_press(){
                         check_players_ready();
                     }
                 }
+            // If black button being pressed, alt function is change number of players
+            }else{
+                buzzer.beep_short();
+                if(three_players){
+                        three_players = false;
+                        green_ready = false;
+                        ingame_settings.set("num_players", "2");
+                    }else{
+                        three_players = true;
+                        ingame_settings.set("num_players", "3");
+                    }
+                red_ready = false;
+                blue_ready = false;
+                green_ready = false;
+                graphics.set_three_players(three_players);
+                num_players();
             }
             break;
         
@@ -330,7 +377,9 @@ void red_btn_press(){
     }
 }
 
-// Load all settings 
+/**
+ * Load settings from settings file
+ **/
 void load_settings(){
 
     // General Settings
@@ -404,8 +453,8 @@ void load_settings(){
     buzzer.set_buzzer_on(webinterface.load_setting("buzzer_on") != "false");
 
 
-    // Prefs File
-    String total_time_string = (prefs.get("total_time"));
+    // In-Game Settings
+    String total_time_string = (ingame_settings.get("total_time"));
     if(total_time_string == ""){
         total_time = 90;
     }else{
@@ -414,21 +463,25 @@ void load_settings(){
     if(total_time > max_time) total_time = max_time;
     if(total_time < min_time) total_time = min_time;
 
-    graphics.set_brightness(prefs.get("brightness"));
+    graphics.set_brightness(ingame_settings.get("brightness"));
 
-    three_players = (prefs.get("num_players") == "3");
+    three_players = (ingame_settings.get("num_players") == "3");
     graphics.set_three_players(three_players);
 
 }
 
-// Wi-Fi Loop for settings update
-void wifi_loop(){
+/**
+ * WiFi setup mode loops until restart
+ **/
+void wifi_setup(){
     // Display a static wifi symbol on the displays
     graphics.show_wifi();
 
     // Start a hotspot
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(IPAddress(1,2,3,4),IPAddress(192,168,4,1),IPAddress(255,255,255,0));
+
+    // Load SSID and password settings
     String SSID = webinterface.load_setting("hotspot_SSID");
     if(SSID == ""){
         WiFi.softAP("battlebots","12345678");
@@ -469,9 +522,11 @@ void wifi_loop(){
     }
 }
 
-// #############################################################################
-//   SETUP
-// #############################################################################
+/**
+ * 
+ * SETUP
+ * 
+ * */
 void setup(){
     // Set button callbacks
     btn_black.set_posedge_cb(black_btn_press);
@@ -482,12 +537,12 @@ void setup(){
     // Initialize web interface
     webinterface.begin();
 
-    // Initialize LED displays
+    // Initialize displays and LEDs
     graphics.begin();
 
-    // If black button held during start up, go to the wifi_loop
+    // If black button held during start up, enter wifi setup mode
     if(!digitalRead(PIN_BTN_BLACK)){
-        wifi_loop();
+        wifi_setup();
     }
 
     // Disable wifi and load settings
@@ -497,7 +552,7 @@ void setup(){
     // Startup beep
     buzzer.beep(500);
     
-    // Intro sequence
+    // Display intro message or skip to displaying the number of players if blank
     if(msg_intro == ""){
         num_players();
     }else{
@@ -506,23 +561,22 @@ void setup(){
     
 }   
 
-// #############################################################################
-//   LOOP
-// #############################################################################
+/**
+ * 
+ * LOOP
+ * 
+ * */
 void loop(){
-    // Handle any time-based interrupts
+    // Handle time-based interrupts
     state_isr.handle();
     buzzer_isr.handle();
 
-    // Handle all button inputs
+    // Handle button inputs
     btn_black.handle();
     btn_blue.handle();
     btn_red.handle();
     btn_green.handle();
 
-    // Handle LED displays
     graphics.handle();
-
-    // Handle buzzer
     buzzer.handle();
 }

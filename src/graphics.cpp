@@ -1,21 +1,38 @@
 #include "graphics.h"
 
 Soft_ISR isr;
-
 bool show_brightness;
 
+/**
+ * Set show brightness off
+ **/
 void show_brightness_off() {
     show_brightness = false;
 }
 
+/**
+ * Initialize graphics LEDs and displays
+ **/
 void Graphics::begin() {
+    show_player_bar = false;
+    
+    // Initialize GPIO
+    pinMode(PIN_LED_RED, OUTPUT);
+    pinMode(PIN_LED_BLUE, OUTPUT);
+    digitalWrite(PIN_LED_BLUE, LOW);
+    digitalWrite(PIN_LED_RED, LOW);
+
     // Initialize Matrix displays
     display_1.begin();
     display_2.begin();
     update_brightness();
 }
 
+/**
+ * Handle all graphics updates (run every loop)
+ **/
 void Graphics::handle() {
+
     isr.handle();
     // Clear Displays
     display_1.clear();
@@ -36,7 +53,11 @@ void Graphics::handle() {
     display_2.show();
 }
 
-// Set new static text (centered)
+/**
+ * Set new static text
+ * @param text to display
+ * @param color of text
+ **/
 void Graphics::text_static(String text, String color){
     text_scroll = false;
     text_xpos = 15 - (text.length() * 3);
@@ -44,7 +65,11 @@ void Graphics::text_static(String text, String color){
     text_string = text;
 }
 
-// Set new dynamic (scrolling) text
+/**
+ * Set new dynamic text
+ * @param text to display
+ * @param color of text
+ **/
 void Graphics::text_dynamic(String text, String color){
     text_xpos = 32;
     text_color = parse_color(color);
@@ -52,12 +77,21 @@ void Graphics::text_dynamic(String text, String color){
     text_scroll = true;
 }
 
-// Set new dynamic (scrolling) text
+/**
+ * Set new dynamic text
+ * @param text to display
+ * @param color of text
+ * @param _callback function to call after text has fully scrolled
+ **/
 void Graphics::text_dynamic(String text, String color, void_function_pointer _callback){
     text_dynamic(text, color);
     isr.set_trigger(_callback);
 }
 
+/**
+ * Set brightness level
+ * @param input brightness level [1,8]
+ **/
 void Graphics::set_brightness(String input){
     if(input == ""){
         brightness = 2;
@@ -69,6 +103,10 @@ void Graphics::set_brightness(String input){
     update_brightness();
 }
 
+/**
+ * Increase brightness by 1 or rollover from 8 to 1
+ * @return new brightness number [1,8]
+ **/
 uint8_t Graphics::change_brightness() {
     if(brightness == 8){
         brightness = 1;
@@ -83,6 +121,9 @@ uint8_t Graphics::change_brightness() {
     return brightness;
 }
 
+/**
+ * Display a static wifi symbol
+ **/
 void Graphics::show_wifi() {
     display_1.clear();
     display_2.clear();
@@ -94,30 +135,65 @@ void Graphics::show_wifi() {
     display_2.show();
 }
 
+/**
+ * Set three or two players
+ * @param in (True - Three Players, False - Two Players)
+ **/
 void Graphics::set_three_players(bool in){
     three_players = in;
 }
+
+/**
+ * Set red player ready
+ * @param in red player is ready
+ **/
 void Graphics::set_red_ready(bool in){
     red_ready = in;
 }
+
+/**
+ * Set blue player ready
+ * @param in blue player is ready
+ **/
 void Graphics::set_blue_ready(bool in){
     blue_ready = in;
 }
+
+/**
+ * Set green player ready
+ * @param in green player is ready
+ **/
 void Graphics::set_green_ready(bool in){
     green_ready = in;
 }
+
+/**
+ * Set show player bar
+ * @param in show player bar 
+ **/
 void Graphics::set_show_player_bar(){
     show_player_bar = true;
 }
 
-// Setters
+/**
+ * Set show aux lights
+ * @param in show aux lights
+ **/
 void Graphics::set_show_aux_lights(bool in){
     show_aux_lights = in;
 }
+
+/**
+ * Set show dim lights for players not ready
+ * @param in show dim lights
+ **/
 void Graphics::set_show_dim_lights(bool in){
     show_dim_lights = in;
 }
 
+/**
+ * Draw player ready bars (three players)
+ **/
 void Graphics::draw_three_players_ready() {
     if(green_ready){
         display_1.drawRect(8,0,16,2,GREEN);
@@ -146,6 +222,9 @@ void Graphics::draw_three_players_ready() {
     }
 }
 
+/**
+ * Draw player ready bars (two players)
+ **/
 void Graphics::draw_two_players_ready() {
     if(blue_ready){
         display_1.drawRect(0,0,14,2,BLUE);
@@ -164,7 +243,9 @@ void Graphics::draw_two_players_ready() {
     }
 }
 
-// Handle drawing players ready lights
+/**
+ * Draw player ready bars
+ **/
 void Graphics::draw_players_ready(){
     if(three_players){
         draw_three_players_ready();
@@ -179,7 +260,9 @@ void Graphics::draw_players_ready(){
     else digitalWrite(PIN_LED_RED, LOW);
 }
 
-// Handle drawing text
+/**
+ * Draw text
+ **/
 void Graphics::draw_text(){
     if(text_scroll){
         text_xpos--;
@@ -209,6 +292,9 @@ void Graphics::draw_text(){
     
 }
 
+/**
+ * Draw brightness display (graphic on left, number on right)
+ **/
 void Graphics::draw_brightness() {
     display_1.drawBitmap(1,2,bmp_brightness_l,16,13,WHITE);
     display_2.drawBitmap(0,0,bmp_brightness_s,8,8,WHITE);
@@ -229,15 +315,20 @@ void Graphics::draw_brightness() {
     display_2.print(String(brightness));
 }
 
-
-
-
+/**
+ * Update screen brightness
+ **/
 void Graphics::update_brightness(){
     display_1.setBrightness(brightness * 10 + 10);
     display_2.setBrightness(brightness * 10);
 }
 
-// Parse color from string
+/**
+ * Parse color from string
+ * @param input color with first char capitalized from ["Blue","White","Green","Cyan","Magenta",
+ *                                                      "Yellow","Red"]
+ * @return Color from [BLUE,WHITE,GREEN,CYAN,MAGENTA,YELLOW,RED] (Default RED)
+ **/
 uint16_t Graphics::parse_color(String input){
     if(input == "Blue") return BLUE;
     if(input == "White") return WHITE;
