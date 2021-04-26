@@ -1,3 +1,9 @@
+/**
+ * Graphics Library for Battlebricks Timer
+ * Controls 2 WS2812 LED Matrix displays and 2 LED light strips.
+ * 
+ * Run the handle() function on each loop or as often as possible for correct timing.
+ **/
 #include "graphics.h"
 
 Soft_ISR isr;
@@ -169,7 +175,6 @@ void Graphics::set_green_ready(bool in){
 
 /**
  * Set show player bar
- * @param in show player bar 
  **/
 void Graphics::set_show_player_bar(){
     show_player_bar = true;
@@ -189,6 +194,14 @@ void Graphics::set_show_aux_lights(bool in){
  **/
 void Graphics::set_show_dim_lights(bool in){
     show_dim_lights = in;
+}
+
+/**
+ * Set rumble mode
+ * @param in rumble mode
+ **/
+void Graphics::set_rumble_mode(bool in){
+    rumble_mode = in;
 }
 
 /**
@@ -247,17 +260,19 @@ void Graphics::draw_two_players_ready() {
  * Draw player ready bars
  **/
 void Graphics::draw_players_ready(){
-    if(three_players){
-        draw_three_players_ready();
-    }else if(show_aux_lights){
-        draw_two_players_ready();
+    if(!rumble_mode){
+        if(three_players){
+            draw_three_players_ready();
+        }else if(show_aux_lights){
+            draw_two_players_ready();
+        }
+
+        if(blue_ready) digitalWrite(PIN_LED_BLUE, HIGH);
+        else digitalWrite(PIN_LED_BLUE, LOW);
+
+        if(red_ready) digitalWrite(PIN_LED_RED, HIGH);
+        else digitalWrite(PIN_LED_RED, LOW);
     }
-
-    if(blue_ready) digitalWrite(PIN_LED_BLUE, HIGH);
-    else digitalWrite(PIN_LED_BLUE, LOW);
-
-    if(red_ready) digitalWrite(PIN_LED_RED, HIGH);
-    else digitalWrite(PIN_LED_RED, LOW);
 }
 
 /**

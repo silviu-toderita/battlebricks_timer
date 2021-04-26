@@ -1,3 +1,9 @@
+/**
+ * Graphics Library for Battlebricks Timer
+ * Controls 2 WS2812 LED Matrix displays and 2 LED light strips.
+ * 
+ * Run the handle() function on each loop or as often as possible for correct timing.
+ **/
 #include "Arduino.h"
 
 #include "Soft_ISR.h"
@@ -51,6 +57,7 @@ class Graphics{
         void set_three_players(bool);
         void set_show_aux_lights(bool);
         void set_show_dim_lights(bool);
+        void set_rumble_mode(bool);
     
     private:
         // Matrix Displays
@@ -71,6 +78,7 @@ class Graphics{
         bool show_player_bar;
         bool show_aux_lights;
         bool show_dim_lights;
+        bool rumble_mode;
         bool three_players;
         bool red_ready;
         bool blue_ready;

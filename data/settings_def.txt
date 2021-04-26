@@ -6,6 +6,12 @@
     "req":false,
     "val":"BATTLEBRICKS"},
 
+    {"id":"msg_rumble",
+    "type":"text",
+    "name":"Rumble Start Message",
+    "req":true,
+    "val":"TIME TO RUMBLE"},
+
     {"id":"msg_get_ready",
     "type":"text",
     "name":"Get Ready Message",

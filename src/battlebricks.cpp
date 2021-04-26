@@ -1,5 +1,6 @@
 /**
  * BATTLEBRICKS TIMER
+ * https://github.com/silviu-toderita/battlebricks_timer
  * 
  * Battlebricks Timer is an ESP8266-based countdown timer for "Battlebricks" (Lego Battlebots) 
  * competitions. 
@@ -12,6 +13,9 @@
  *  -Buzzer for audio feedback
  *  -Wi-Fi and web settings page for full customization of all parameters
  *  -In-game settings can be adjusted on the fly (total time, number of players, screen brightness)
+ * 
+ * Setup:
+ *  Full details at https://github.com/silviu-toderita/battlebricks_timer
  * 
  **/
 #include "battlebricks.h"
@@ -177,6 +181,11 @@ void ready(){
     pre_countdown_msg();
 }
 
+// Start rumble mode
+void rumble(){
+    graphics.text_dynamic(msg_rumble, "Red", ready);
+}
+
 // Display static clock
 void standby(){
     graphics.text_static(format_time(total_time, true), color_timer);
@@ -186,8 +195,17 @@ void standby(){
 // Display number of players
 void num_players(){
     state = STANDBY;
-    if(three_players) graphics.text_dynamic("3 PLAYERS", "Green", standby);
-    else graphics.text_dynamic("2 PLAYERS", "Blue", standby);
+    switch(mode){
+        case TWO_PLAYER:
+            graphics.text_dynamic("2 PLAYERS", "Blue", standby);
+            break;
+        case THREE_PLAYER:
+            graphics.text_dynamic("3 PLAYERS", "Green", standby);
+            break;
+        default:
+            graphics.text_dynamic("RUMBLE MODE", "Red", standby);
+            break;
+    }
 }
 
 // Display intro message
@@ -204,14 +222,14 @@ void intro(){
  * Check if enough players are ready, and start the game
  **/
 void check_players_ready(){
-    if(three_players){
+    if(mode == THREE_PLAYER){
         if(blue_ready & green_ready & red_ready){
             state = PRE;
             ready();
         }else{
             standby();
         }
-    }else{
+    }else if(mode == TWO_PLAYER){
         if(blue_ready & red_ready){
             state = PRE;
             ready();
@@ -225,7 +243,8 @@ void check_players_ready(){
  * Handles black button press
  **/
 void black_btn_press(){
-    uint32_t start_time = millis();
+    long start_time = millis();
+    bool reset_flag = false;
     switch(state){
         // Skip ahead during startup
         case STARTUP:
@@ -245,14 +264,26 @@ void black_btn_press(){
             buzzer.beep(1000);
             pause();
             break;
-        // Resume game
+        // Resume game or restart if button held for 3 seconds
         case PAUSED:
-            buzzer.beep_short();
-            pre_countdown_msg();
+            while(btn_black.get()){
+                yield();
+                if(millis() > start_time + 3000){
+                    reset_flag = true;
+                    break;
+                }
+            }
+            if(reset_flag){
+                buzzer.beep(250);
+                reset();
+            }else{
+                buzzer.beep_short();
+                pre_countdown_msg();
+            }
             break;
         // Reset game after game over
         case GAME_OVER:
-            buzzer.beep(500);
+            buzzer.beep(250);
             reset();
             break;
 
@@ -266,23 +297,27 @@ void black_btn_press(){
 void green_btn_press(){
     switch(state){
         case STANDBY:
-            // Set red player ready / not ready
+            // Set green player ready / not ready if in three player mode
             if(!btn_black.get()){
-                buzzer.beep_double();
-                if(green_ready){
-                    green_ready = false;
-                    graphics.set_green_ready(false);
-                } else {
-                    green_ready = true;
-                    graphics.set_green_ready(true);
-                    if(show_ready){
-                        graphics.text_dynamic("GREEN READY", "Green",check_players_ready);
-                    }else{
-                        check_players_ready();
+                if(mode == THREE_PLAYER){
+                    buzzer.beep_double();
+                    if(mode == RUMBLE){
+                        rumble();
+                    }else if(green_ready){
+                        green_ready = false;
+                        graphics.set_green_ready(false);
+                    } else {
+                        green_ready = true;
+                        graphics.set_green_ready(true);
+                        if(show_ready){
+                            graphics.text_dynamic("GREEN READY", "Green",check_players_ready);
+                        }else{
+                            check_players_ready();
+                        }
                     }
                 }
             // If black button being pressed, alt function is change time
-            }else if(three_players){
+            }else{
                 buzzer.beep_short();
                 if(total_time + interval_time > max_time){
                     total_time = min_time;
@@ -308,7 +343,9 @@ void blue_btn_press(){
             // Set blue player ready / not ready
             if(!btn_black.get()){
                 buzzer.beep_double();
-                if(blue_ready){
+                if(mode == RUMBLE){
+                    rumble();
+                }else if(blue_ready){
                     blue_ready = false;
                     graphics.set_blue_ready(false);
                 } else {
@@ -341,7 +378,9 @@ void red_btn_press(){
             // Set red player ready / not ready
             if(!btn_black.get()){
                 buzzer.beep_double();
-                if(red_ready){
+                if(mode == RUMBLE){
+                    rumble();
+                }else if(red_ready){
                     red_ready = false;
                     graphics.set_red_ready(false);
                 } else {
@@ -356,18 +395,25 @@ void red_btn_press(){
             // If black button being pressed, alt function is change number of players
             }else{
                 buzzer.beep_short();
-                if(three_players){
-                        three_players = false;
-                        green_ready = false;
-                        ingame_settings.set("num_players", "2");
-                    }else{
-                        three_players = true;
-                        ingame_settings.set("num_players", "3");
-                    }
+                switch(mode){
+                    case(TWO_PLAYER):
+                        mode = THREE_PLAYER;
+                        ingame_settings.set("mode", "1");
+                        break;
+                    case(THREE_PLAYER):
+                        mode = RUMBLE;
+                        ingame_settings.set("mode", "2");
+                        break;
+                    default:
+                        mode = TWO_PLAYER;
+                        ingame_settings.set("mode", "0");
+                        break;      
+                }
                 red_ready = false;
                 blue_ready = false;
                 green_ready = false;
-                graphics.set_three_players(three_players);
+                graphics.set_three_players(mode == THREE_PLAYER);
+                graphics.set_rumble_mode(mode == RUMBLE);
                 num_players();
             }
             break;
@@ -390,6 +436,7 @@ void load_settings(){
     graphics.set_show_aux_lights(webinterface.load_setting("show_aux_lights") == "true");
     graphics.set_show_dim_lights(webinterface.load_setting("show_dim_lights") == "true");
     show_ready = webinterface.load_setting("show_ready") == "true";
+    msg_rumble = webinterface.load_setting("msg_rumble");
     msg_get_ready = webinterface.load_setting("msg_get_ready");
     msg_game_over = webinterface.load_setting("msg_game_over");
 
@@ -465,8 +512,9 @@ void load_settings(){
 
     graphics.set_brightness(ingame_settings.get("brightness"));
 
-    three_players = (ingame_settings.get("num_players") == "3");
-    graphics.set_three_players(three_players);
+    mode = ingame_settings.get("mode").toInt();
+    graphics.set_three_players(mode == THREE_PLAYER);
+    graphics.set_rumble_mode(mode == RUMBLE);
 
 }
 

@@ -17,14 +17,14 @@ Button::Button(uint8_t pin_in, bool internal_pullup){
 void Button::handle(){
     bool new_state = !digitalRead(pin);
     if(new_state != current_state && millis() > last_change + DEBOUNCE_TIME){
+        current_state = new_state;
+        last_change = millis();
         if(new_state){
             if(posedge_cb != NULL) posedge_cb();
         }
         if(!new_state){
             if(negedge_cb != NULL) negedge_cb();
         }
-        current_state = new_state;
-        last_change = millis();
     }
 }
 

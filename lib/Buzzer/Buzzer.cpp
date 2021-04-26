@@ -1,4 +1,10 @@
-#include "buzzer.h"
+/**
+ * Buzzer Library
+ * Control an externally connected buzzer
+ * 
+ * Run the handle() function on each loop or as often as possible for correct timing.
+ **/
+#include "Buzzer.h"
 
 /**
  * Constructor
