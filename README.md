@@ -1,11 +1,11 @@
 # Battlebricks Competition Timer
 
-Competition timer for a game of all-out remote-controlled LEGO battlebots destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays can show numbers, text and graphics. 
+Competition timer for a game of all-out remote-controlled LEGO battlebots destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays show a mix of text and graphics depending on the status of the game. 
 
 ## Features
 - Adjust game time, number of players and brightness easily between rounds
 - Supports 2 players, 3 players, and a free-for-all "rumble mode"
-- External player ready lights for Red and Blue players, and auxilliary on-screen lights for Red, Blue and Green players
+- Externad and on-screen light bars show player status
 - Fully configurable over wifi on mobile-friendly settings page
 - Built-in buzzer for audio feedback
 
