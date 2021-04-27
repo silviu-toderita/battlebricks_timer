@@ -1,5 +1,7 @@
 # Battlebricks Competition Timer
 
+[![Battlebricks Timer Video](https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/video_thumb.png)](https://youtu.be/ey022NEUoDs "Battlebricks Timer Overview")
+
 Competition timer for a game of all-out remote-controlled LEGO battlebots destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays show a mix of text and graphics depending on the status of the game. 
 
 ## Features
@@ -10,10 +12,12 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 - Built-in buzzer for audio feedback
 
 ## Progress
-As of Apr 2021, the firmware is complete and has been tested on a prototype with all hardware components. Below are some pictures of the prototype. Still to do:
+As of Apr 2021, the firmware is complete and has been tested on a prototype with all hardware components. Still to do:
 - Build a case from clear acrylic sheets and LEGO to display and protect the Battlebricks Timer during competitions
 - Finish and publish a parts list and schematic
 - Create a setup guide so you can build your own Battlebricks Timer
+
+Here are some photos of the current prototype:
 
 <img src="https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/proto_1.JPG" width="500"><img src="https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/proto_2.JPG" width="500">
 
