@@ -2,7 +2,7 @@
 
 [![Battlebricks Timer Video](https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/video_thumb.jpg)](https://www.youtube.com/watch?v=O_XwcW9traM "Battlebricks Timer Overview")
 
-Competition timer for a game of all-out remote-controlled LEGO battlebots destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays show a mix of text and graphics depending on the status of the game. 
+Competition timer for a game of all-out remote-controlled LEGO Battlebricks destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays show a mix of text and graphics depending on the status of the game. 
 
 ## Features
 - Set your prefered game time and change it between rounds with the push of a button
