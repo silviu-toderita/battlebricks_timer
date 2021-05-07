@@ -14,6 +14,8 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 
 ## Hardware
 
+![Battlebricks Timer](https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/front.JPG)
+
 ### Components
 - ESP8266 (NodeMCU 1.0 or equivalent)
 - 2x 16x16 WS2812 LED Matrix Displays
