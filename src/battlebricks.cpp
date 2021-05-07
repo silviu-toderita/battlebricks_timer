@@ -272,6 +272,7 @@ void black_btn_press(){
                     reset_flag = true;
                     break;
                 }
+                btn_black.handle();
             }
             if(reset_flag){
                 buzzer.beep(250);
@@ -542,12 +543,18 @@ void wifi_setup(){
         }
     }
 
+    // Initialize OTA
+    ArduinoOTA.setHostname("battlebricks");
+    ArduinoOTA.setPassword("12345678");
+    ArduinoOTA.begin();
+
     // Wifi Loop
     uint64_t button_pressed_time;
     bool button_pressed = false;
     bool restart = false;
     while(true){
         webinterface.handle();
+        ArduinoOTA.handle();
         yield();
         
         if(button_pressed){

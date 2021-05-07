@@ -26,6 +26,7 @@
 #include "Button.h"
 #include "ESP8266WiFi.h"
 #include "ESP8266WiFiMulti.h"
+#include "ArduinoOTA.h"
 #include "Web_Interface.h"
 #include "Buzzer.h"
 
