@@ -19,6 +19,8 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 - 2x 16x16 WS2812 LED Matrix Displays
 - 2x 8x8 WS2812 LED Matrix Displays
 - 5V/8A Power Supply
+- DC Jack
+- Power Button
 - 1n4001 Diode
 - 1000uF 15v Electrolytic Capacitor
 - 47uF 15v Electrolytic Capacitor
