@@ -5,7 +5,7 @@
 Competition timer for a game of all-out remote-controlled LEGO battlebots destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays show a mix of text and graphics depending on the status of the game. 
 
 ## Features
-- Adjust game time, number of players and brightness easily between rounds
+- Set your prefered game time and change it between rounds with the push of a button
 - Supports 2 players, 3 players, and a free-for-all "rumble mode"
 - External and on-screen light bars show which players are ready
 - Fully configurable over wifi on mobile-friendly settings page
@@ -14,12 +14,12 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 
 ## Hardware
 
-### Bill of Materials
+### Components
 - ESP8266 (NodeMCU 1.0 or equivalent)
 - 2x 16x16 WS2812 LED Matrix Displays
 - 2x 8x8 WS2812 LED Matrix Displays
-- 1n4001 Diode
 - 5V/8A Power Supply
+- 1n4001 Diode
 - 1000uF 15v Electrolytic Capacitor
 - 47uF 15v Electrolytic Capacitor
 - Piezo Buzzer
@@ -28,6 +28,10 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 - Red 5v LED light bar
 - Blue 5v LED light bar
 - 4x Momentary Buttons (Red, Green, Blue, and Black)
+
+### Schematic
+
+*Coming Soon*
 
 
 ## Firmware
