@@ -28,6 +28,7 @@ Competition timer for a game of all-out remote-controlled LEGO battlebots destru
 - Red 5v LED light bar
 - Blue 5v LED light bar
 - 4x Momentary Buttons (Red, Green, Blue, and Black)
+- Case - *Build your own!*
 
 ### Schematic
 
