@@ -379,7 +379,7 @@ void handle_settings_post(){
 void handle_nav(){
     String response;
     response = "<nav class=\"navbar navbar-expand-md navbar-dark bg-primary mb-4\">";
-    response +=     "<a class=\"navbar-brand\" href=\"/index.html\">LEGO Battlebots Timer</a>";
+    response +=     "<a class=\"navbar-brand\" href=\"/index.html\">LEGO Battlebricks Timer</a>";
     response +=     "<button class=\"navbar-toggler\" type=\"button\" data-toggle=\"collapse\" data-target=\"#navbarCollapse\" aria-controls=\"navbarCollapse\" aria-expanded=\"false\" aria-label=\"Toggle navigation\">";
     response +=         "<span class=\"navbar-toggler-icon\"></span>";
     response +=     "</button>";

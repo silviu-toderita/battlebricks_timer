@@ -2,7 +2,7 @@
  * BATTLEBRICKS TIMER
  * https://github.com/silviu-toderita/battlebricks_timer
  * 
- * Battlebricks Timer is an ESP8266-based countdown timer for "Battlebricks" (Lego Battlebots) 
+ * Battlebricks Timer is an ESP8266-based countdown timer for LEGO Battlebricks
  * competitions. 
  * 
  * Features: 

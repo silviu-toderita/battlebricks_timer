@@ -6,7 +6,7 @@
 
         <link rel="shortcut icon" href="/favicon.ico">
         
-        <title> LEGO Battlebots </title>
+        <title> LEGO Battlebricks </title>
 
         <!--Load Bootstrap-->
         <link rel='stylesheet' href='lib/bs.css'>
@@ -29,7 +29,7 @@
                     $("#restart-button").html("Restarting...");
                     $("#restart-button").prop('disabled', true);
                     $.get("/restart", function(data){
-                        alert("Battlebots Timer is Restarting...");
+                        alert("Battlebricks Timer is Restarting...");
                         $("#restart-button").html("Restart");
                         $("#restart-button").prop('disabled', false);
                     });
@@ -45,7 +45,7 @@
         <div id="navigation"></div>
 
         <main class="container">
-            <img src="logo.png" class="img-fluid" alt="LEGO Battlebots">
+            <img src="logo.png" class="img-fluid" alt="LEGO Battlebricks">
         </main>
         <div class="container">
             <button class="btn btn-dark float-left" id="restart-button">Restart</button>

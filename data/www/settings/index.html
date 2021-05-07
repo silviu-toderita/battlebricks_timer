@@ -6,7 +6,7 @@
 
         <link rel="shortcut icon" href="/favicon.ico">
         
-        <title> LEGO Battlebots </title>
+        <title> LEGO Battlebricks </title>
 
         <!--Load Bootstrap-->
         <link rel='stylesheet' href='/lib/bs.css'>
@@ -32,7 +32,7 @@
                     $("#submit-button").html("Saving...");
                     $("#submit-button").prop('disabled', true);
                     $.post("/settings_data", $("#settings-form").serialize(), function(data){
-                        alert("Settings Updated! Battlebots Timer is Restarting...");
+                        alert("Settings Updated! Battlebricks Timer is Restarting...");
                         $("#submit-button").html("Save and Restart");
                         $("#submit-button").prop('disabled', false);
                     });
@@ -58,7 +58,7 @@
                         processData: false,
                         contentType: false
                     }).done(function() {
-                        alert("Settings Updated! Battlebots Timer is Restarting...");
+                        alert("Settings Updated! Battlebricks Timer is Restarting...");
                     });
                 })
 

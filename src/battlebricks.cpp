@@ -2,7 +2,7 @@
  * BATTLEBRICKS TIMER
  * https://github.com/silviu-toderita/battlebricks_timer
  * 
- * Battlebricks Timer is an ESP8266-based countdown timer for "Battlebricks" (Lego Battlebots) 
+ * Battlebricks Timer is an ESP8266-based countdown timer for Lego Battlebricks
  * competitions. 
  * 
  * Features: 
@@ -533,7 +533,7 @@ void wifi_setup(){
     // Load SSID and password settings
     String SSID = webinterface.load_setting("hotspot_SSID");
     if(SSID == ""){
-        WiFi.softAP("battlebots","12345678");
+        WiFi.softAP("battlebricks","12345678");
     }else{
         String password = webinterface.load_setting("hotspot_password");
         if(password.length() < 8){
