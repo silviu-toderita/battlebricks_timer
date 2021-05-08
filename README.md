@@ -17,21 +17,28 @@ Competition timer for a game of all-out remote-controlled LEGO Battlebricks dest
 ![Battlebricks Timer](https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/front.jpg)
 
 ### Components
+*(Required) Main Components:*
 - ESP8266 (NodeMCU 1.0 or equivalent)
 - 2x 16x16 WS2812 LED Matrix Displays
-- 2x 8x8 WS2812 LED Matrix Displays
 - 5V/8A Power Supply
 - DC Jack
-- Power Button
 - 1n4001 Diode
 - 1000uF 15v Electrolytic Capacitor
 - 47uF 15v Electrolytic Capacitor
-- Piezo Buzzer
+- 4x Momentary Buttons (Red, Green, Blue, and Black)
+
+*(Optional) Secondary Display:*
+- 2x 8x8 WS2812 LED Matrix Displays
+
+*(Optional) Light Bars:*
 - 2x 10kΩ Resistors
 - 2x 2N3904 NPN Transistors
 - Red 5v LED light bar
 - Blue 5v LED light bar
-- 4x Momentary Buttons (Red, Green, Blue, and Black)
+
+*(Optional) Other Components:*
+- Piezo Buzzer
+- Power Button
 - Case - *Build your own!*
 
 ### Schematic
