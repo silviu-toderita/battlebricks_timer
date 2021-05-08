@@ -44,7 +44,8 @@ Competition timer for a game of all-out remote-controlled LEGO Battlebricks dest
 
 ### Schematic
 
-*Coming Soon*
+![Battlebricks Timer Schematic](https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/schematic.jpg)
+*NOTE: When using WS2812 LED Matrix Displays, connect ALL VCC and GND wires to the 5V and GND rails respectively, as peak current draw may be too much for a single pair of wires to handle!*
 
 
 ## Firmware
