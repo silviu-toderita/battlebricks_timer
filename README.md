@@ -35,6 +35,7 @@ Competition timer for a game of all-out remote-controlled LEGO Battlebricks dest
 - 2x 2N3904 NPN Transistors
 - Red 5v LED light bar
 - Blue 5v LED light bar
+- 2x Current-Limiting LED resistors (if not included in light bars)
 
 *(Optional) Other Components:*
 - Piezo Buzzer
