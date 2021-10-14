@@ -4,6 +4,8 @@
 
 Competition timer for a game of all-out remote-controlled LEGO Battlebricks destruction. Based on an ESP8266 WiFi-enabled Microcontroller, it features an LED matrix displays that faces the audience, and a smaller LED matrix display that faces the players. Both displays show a mix of text and graphics depending on the status of the game. 
 
+The Battlebricks Timer was used at the [BrickCon 2021 Battlebricks Tournament](https://battlebricks.org/)! Watch [Part 1](https://www.youtube.com/watch?v=iiqxc3ZPi2Y) & [Part 2](https://www.youtube.com/watch?v=IBWVR5-2r30).
+
 ## Features
 - Set your prefered game time and change it between rounds with the push of a button
 - Supports 2 players, 3 players, and a free-for-all "rumble mode"
