@@ -14,6 +14,8 @@ The Battlebricks Timer was used at the [BrickCon 2021 Battlebricks Tournament](h
 - Built-in buzzer for audio feedback
 - Over-The-Air firmware updates
 
+*For details on operation, please watch the video above*
+
 ## Hardware
 
 ![Battlebricks Timer](https://raw.githubusercontent.com/silviu-toderita/battlebricks_timer/main/docs/front.jpg)
@@ -53,6 +55,8 @@ The Battlebricks Timer was used at the [BrickCon 2021 Battlebricks Tournament](h
 ## Firmware
 
 Written in C++ for the ESP family of connected microcontrollers, and using the Arduino framework. Developed using Visual Studio Code and PlatformIO. A platformio.ini file is included; If you clone the repository and open it up with Visual Studio Code with the PlatformIO extension installed, the dependencies should download automatically. 
+
+*NOTE: In addition to flashing the firmware to the microcontroller, you must also [flash the file system](https://randomnerdtutorials.com/esp32-vs-code-platformio-spiffs/). 
 
 ### Dependencies
 - [adafruit/Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) 1.7.0
