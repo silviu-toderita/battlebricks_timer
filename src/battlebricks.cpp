@@ -527,8 +527,9 @@ void wifi_setup(){
     graphics.show_wifi();
 
     // Start a hotspot
+    WiFi.persistent(false);
     WiFi.mode(WIFI_AP);
-    WiFi.softAPConfig(IPAddress(1,2,3,4),IPAddress(192,168,4,1),IPAddress(255,255,255,0));
+    WiFi.softAPConfig(IPAddress(1,2,3,4),IPAddress(1,2,3,4),IPAddress(255,255,255,0));
 
     // Load SSID and password settings
     String SSID = webinterface.load_setting("hotspot_SSID");
